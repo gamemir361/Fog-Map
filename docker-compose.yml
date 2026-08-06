@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: urban_explore_db_new
+    environment:
+      - POSTGRES_USER=urban_admin
+      - POSTGRES_PASSWORD=supersecret
+      - POSTGRES_DB=urban_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - urban_data_new:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    container_name: urban_explore_api
+    # Dastoor jadid baraye live-reload tuye docker
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://urban_admin:supersecret@db:5432/urban_db
+    # Inja looleh shishei ro mikeshim!
+    volumes:
+      - ./backend:/app
+
+volumes:
+  urban_data_new:

@@ -1,0 +1,30 @@
+{
+    "version": 0.6,
+    "generator": "Urban Explore Mock Engine",
+    "elements": [
+        {
+            "type": "node",
+            "id": 1,
+            "lat": 35.7,
+            "lon": 51.39
+        },
+        {
+            "type": "node",
+            "id": 2,
+            "lat": 35.71,
+            "lon": 51.4
+        },
+        {
+            "type": "way",
+            "id": 3,
+            "nodes": [
+                1,
+                2
+            ],
+            "tags": {
+                "highway": "pedestrian",
+                "name": "Koocheh Testi (Mock)"
+            }
+        }
+    ]
+}

@@ -1,0 +1,153 @@
+# =========================
+# Windows & OS
+# =========================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+.DS_Store
+
+# =========================
+# IDEs & Editors
+# =========================
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# Cursor
+.cursor/
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+*.iws
+
+# =========================
+# Python / Backend
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+venv.bak/
+.env/
+.venv/
+env/
+ENV/
+
+# Testing & Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# =========================
+# Flutter / Dart / Mobile
+# =========================
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+mobile/build/
+flutter_*.png
+*.log
+
+# Android
+mobile/android/.gradle/
+mobile/android/app/src/main/gen/
+mobile/android/local.properties
+mobile/android/app/build/
+*.jks
+*.keystore
+
+# iOS
+mobile/ios/**/*.pbxuser
+mobile/ios/**/*.mode1v3
+mobile/ios/**/*.mode2v3
+mobile/ios/**/*.pbxworkspace
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Runner.xcworkspace/xcuserdata
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+
+# =========================
+# Node.js (If used in scripts/tools)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================
+# Docker
+# =========================
+.docker/
+docker-compose.override.yml
+*.env
+.env.local
+.env.dev
+.env.test
+.env.prod
+
+# =========================
+# Terraform / Infrastructure
+# =========================
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
