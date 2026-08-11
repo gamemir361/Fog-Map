@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_optional_current_user
+from app.core.deps import get_current_user, get_optional_current_user
 from app.modules.users.models import User
 from app.modules.exploration.schemas import (
     FogDiscoverRequest,
@@ -11,15 +11,186 @@ from app.modules.exploration.schemas import (
     POIResponse,
     RoutePlanRequest,
     RoutePlanResponse,
+    ExplorationEventResponse,
+    NearbyEventsResponse,
+    SingleEventResponse,
+    EventParticipateRequest,
+    EventParticipateResponse,
+    EventDensityResponse,
+    EventLeaderboardResponse,
+    EventActivityFeedResponse,
 )
 from app.modules.exploration.service import (
     discover_fog,
     get_recommended_pois,
     list_pois,
     plan_route,
+    get_nearby_events,
+    get_event_by_id,
+    participate_event,
+    get_event_density,
+    get_event_leaderboard,
+    get_event_activities,
 )
 
 router = APIRouter()
+
+
+@router.get("/events/activity", response_model=EventActivityFeedResponse)
+def get_event_activity_feed_endpoint(
+    event_id: Optional[int] = Query(None, description="Filter activity by event_id"),
+    limit: Optional[int] = Query(20, ge=1, le=50, description="Max activities to return"),
+    cursor_id: Optional[int] = Query(None, description="Cursor for pagination (older than id)"),
+    db: Session = Depends(get_db),
+):
+    try:
+        activities = get_event_activities(
+            db=db,
+            event_id=event_id,
+            limit=limit or 20,
+            cursor_id=cursor_id,
+        )
+        return {
+            "status": "success",
+            "count": len(activities),
+            "activities": activities,
+        }
+    except ValueError as val_err:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(val_err))
+
+
+@router.get("/events/{event_id}/leaderboard", response_model=EventLeaderboardResponse)
+def get_event_leaderboard_endpoint(
+    event_id: int,
+    limit: Optional[int] = Query(10, ge=1, le=50, description="Number of top entries to return"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    user_id = current_user.id if current_user else None
+    return get_event_leaderboard(
+        db=db,
+        event_id=event_id,
+        limit=limit or 10,
+        current_user_id=user_id,
+    )
+
+
+@router.get("/events/density", response_model=EventDensityResponse)
+def get_event_density_endpoint(
+    min_lat: float = Query(..., description="Minimum Latitude"),
+    min_lon: float = Query(..., description="Minimum Longitude"),
+    max_lat: float = Query(..., description="Maximum Latitude"),
+    max_lon: float = Query(..., description="Maximum Longitude"),
+    zoom: Optional[int] = Query(13, ge=1, le=22, description="Map zoom level"),
+    event_type: Optional[str] = Query(None, description="Event type filter"),
+    status: Optional[str] = Query("active", description="Status filter: active, scheduled, ended, all"),
+    db: Session = Depends(get_db),
+):
+    try:
+        clusters = get_event_density(
+            db=db,
+            min_lat=min_lat,
+            min_lon=min_lon,
+            max_lat=max_lat,
+            max_lon=max_lon,
+            zoom=zoom or 13,
+            event_type=event_type,
+            status_filter=status,
+        )
+        return {
+            "status": "success",
+            "zoom": zoom or 13,
+            "count": len(clusters),
+            "clusters": clusters,
+        }
+    except ValueError as val_err:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(val_err))
+
+
+@router.get("/events/nearby", response_model=NearbyEventsResponse)
+def get_nearby_events_endpoint(
+    lat: float = Query(..., description="عرض جغرافیایی (Latitude)"),
+    lon: float = Query(..., description="طول جغرافیایی (Longitude)"),
+    radius: Optional[float] = Query(10000.0, description="شعاع جستجو به متر"),
+    status: Optional[str] = Query("active", description="فیلتر وضعیت: active, scheduled, ended, ending_soon, all"),
+    event_type: Optional[str] = Query(None, description="فیلتر نوع رویداد: cultural, historical, challenge, nature, exploration, all"),
+    sort: Optional[str] = Query("distance", description="مرتب‌سازی: distance, xp, ending_soon"),
+    limit: Optional[int] = Query(50, ge=1, le=100, description="حداکثر تعداد نتایج"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    try:
+        user_id = current_user.id if current_user else None
+        events = get_nearby_events(
+            db=db,
+            lat=lat,
+            lon=lon,
+            radius=radius,
+            status_filter=status,
+            event_type=event_type,
+            sort_by=sort,
+            limit=limit or 50,
+            current_user_id=user_id,
+        )
+        return {
+            "status": "success",
+            "message": f"تعداد {len(events)} رویداد در محدوده یافت شد.",
+            "count": len(events),
+            "events": events,
+        }
+    except ValueError as val_err:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(val_err))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"خطا در دریافت رویدادها: {str(exc)}")
+
+
+@router.get("/events/{event_id}", response_model=SingleEventResponse)
+def get_event_detail_endpoint(
+    event_id: int,
+    lat: Optional[float] = Query(None, description="Player latitude"),
+    lon: Optional[float] = Query(None, description="Player longitude"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    user_id = current_user.id if current_user else None
+    evt_dict = get_event_by_id(
+        db=db,
+        event_id=event_id,
+        current_user_id=user_id,
+        user_lat=lat,
+        user_lon=lon,
+    )
+    return {
+        "status": "success",
+        "event": evt_dict,
+    }
+
+
+@router.post("/events/{event_id}/participate", response_model=EventParticipateResponse)
+def participate_in_event(
+    event_id: int,
+    req: EventParticipateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        res = participate_event(
+            db=db,
+            user_id=current_user.id,
+            event_id=event_id,
+            lat=req.latitude,
+            lon=req.longitude,
+        )
+        return res
+    except ValueError as val_err:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(val_err))
 
 
 @router.get("/pois", response_model=list[POIResponse])
@@ -86,7 +257,10 @@ def discover_poi(
 
     db.commit()
 
-    xp_res = XPEngine.award_xp(db, target_user_id, "DISCOVER_POI", entity_id=f"poi_{poi_id}")
+    from app.modules.exploration.service import POI_RARITY_XP
+    p_rarity = getattr(poi, "rarity", "common") or "common"
+    p_xp = POI_RARITY_XP.get(p_rarity, 25)
+    xp_res = XPEngine.award_xp(db, target_user_id, "DISCOVER_POI", entity_id=f"poi_{poi_id}", custom_xp=p_xp)
     update_user_missions(db, target_user_id, "visit_poi", {"category": poi.category})
 
     payload = build_poi_payload(

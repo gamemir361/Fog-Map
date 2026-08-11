@@ -81,11 +81,25 @@ def seed_exploration_data():
                 ("کوهسار و بام شهران", "nightlife", "POINT(51.2750 35.7720)", "ارتفاعات غرب تهران با دید پانورامیک به چراغ‌های شبانه شهر.", {"nature": 0.8, "history": 0.1, "crowded": 0.5, "quiet": 0.7, "nightlife": 0.88, "luxury": 0.3, "budget": 0.8, "romantic": 0.8, "family": 0.7, "study": 0.3, "photography": 0.9, "food": 0.4}),
             ]
 
+            LEGENDARY_POIS = {"کاخ گلستان", "باغ ملی گیاه‌شناسی", "کتابخانه ملی ایران"}
+            EPIC_POIS = {"میدان و برج آزادی", "برج میلاد", "پل طبیعت", "کاخ سعدآباد", "کاخ نیاوران", "دریاچه چیتگر (شهدای خلیج فارس)", "مرکز خرید ایران مال"}
+            RARE_POIS = {"خانه مقدم", "بازار بزرگ تهران", "بازار تجریش", "باغ فردوس و موزه سینما", "موزه هنرهای معاصر", "موزه ملی ایران", "بام تهران (ولنجک)", "تئاتر شهر"}
+
             for name, category, geom_wkt, desc, vibe_dict in pois_data:
+                if name in LEGENDARY_POIS:
+                    rarity_val = "legendary"
+                elif name in EPIC_POIS:
+                    rarity_val = "epic"
+                elif name in RARE_POIS:
+                    rarity_val = "rare"
+                else:
+                    rarity_val = "common"
+
                 poi = POI(
                     name=name,
                     category=category,
                     geometry=WKTElement(geom_wkt, srid=4326),
+                    rarity=rarity_val,
                 )
                 session.add(poi)
                 session.flush()
@@ -117,3 +131,180 @@ def seed_exploration_data():
         session.commit()
     finally:
         session.close()
+
+
+def seed_exploration_events(session: Session = None):
+    import datetime
+    from app.modules.exploration.models import ExplorationEvent
+
+    close_session = False
+    if session is None:
+        session = Session(bind=engine)
+        close_session = True
+
+    try:
+        now = datetime.datetime.utcnow()
+
+        events_data = [
+            # --- Active Events ---
+            {
+                "title": "جشنواره فرهنگ و هنر کاخ گلستان",
+                "description": "بازدید از تالارهای تاریخی آینه‌کاری و نمایشگاه صنایع‌دستی قاجار در عمارت گلستان.",
+                "event_type": "cultural",
+                "lat": 35.6790,
+                "lon": 51.4200,
+                "radius": 300.0,
+                "xp_reward": 150,
+                "starts_at": now - datetime.timedelta(days=2),
+                "ends_at": now + datetime.timedelta(days=5),
+            },
+            {
+                "title": "شب تاریخ و معماری بازار بزرگ",
+                "description": "پیمایش شبانه سراها و تیمچه‌های تاریخی بازار کلان‌شهر تهران.",
+                "event_type": "historical",
+                "lat": 35.6740,
+                "lon": 51.4190,
+                "radius": 400.0,
+                "xp_reward": 200,
+                "starts_at": now - datetime.timedelta(days=1),
+                "ends_at": now + datetime.timedelta(days=3),
+            },
+            {
+                "title": "چالش معماری و نمادهای برج آزادی",
+                "description": "کشف زوایای پنهان معماری نمادین برج آزادی و محوطه میدان.",
+                "event_type": "challenge",
+                "lat": 35.6997,
+                "lon": 51.3347,
+                "radius": 500.0,
+                "xp_reward": 120,
+                "starts_at": now - datetime.timedelta(hours=12),
+                "ends_at": now + datetime.timedelta(days=2),
+            },
+            {
+                "title": "پیمایش پاییزی باغ گیاه‌شناسی ملی",
+                "description": "کاوش کلکسیون‌های نادر گیاهی از چین، هیمالیا و زاگرس در باغ ملی.",
+                "event_type": "nature",
+                "lat": 35.7400,
+                "lon": 51.1850,
+                "radius": 600.0,
+                "xp_reward": 180,
+                "starts_at": now - datetime.timedelta(days=3),
+                "ends_at": now + datetime.timedelta(days=4),
+            },
+            # --- Ending Soon Event ---
+            {
+                "title": "کاوش فشرده گنجینه‌های خانه مقدم",
+                "description": "فرصت پایانی برای کشف باارزش‌ترین کاشیکاری‌های الوان در خانه مقدم.",
+                "event_type": "historical",
+                "lat": 35.6870,
+                "lon": 51.4080,
+                "radius": 250.0,
+                "xp_reward": 250,
+                "starts_at": now - datetime.timedelta(hours=22),
+                "ends_at": now + datetime.timedelta(hours=2),
+            },
+            # --- Scheduled / Upcoming Events ---
+            {
+                "title": "شب‌های روشن برج میلاد",
+                "description": "رویداد پیش‌رو برای عکاسی پانورامیک شبانه از بام پایتخت.",
+                "event_type": "exploration",
+                "lat": 35.7447,
+                "lon": 51.3753,
+                "radius": 500.0,
+                "xp_reward": 150,
+                "starts_at": now + datetime.timedelta(days=2),
+                "ends_at": now + datetime.timedelta(days=5),
+            },
+            {
+                "title": "ماراتون عکاسی خیابان سی تیر",
+                "description": "مسابقه عکاسی سنگفرش تاریخی و استریت‌فودهای خیابان ۳۰ تیر.",
+                "event_type": "cultural",
+                "lat": 35.6920,
+                "lon": 51.4140,
+                "radius": 350.0,
+                "xp_reward": 160,
+                "starts_at": now + datetime.timedelta(days=3),
+                "ends_at": now + datetime.timedelta(days=7),
+            },
+            {
+                "title": "چالش پیاده‌روی پل طبیعت و باغ کتاب",
+                "description": "رویداد ورزشی-کاوشی عبور از پل طبیعت تا تالارهای مطالعه باغ کتاب.",
+                "event_type": "challenge",
+                "lat": 35.7548,
+                "lon": 51.4215,
+                "radius": 700.0,
+                "xp_reward": 300,
+                "starts_at": now + datetime.timedelta(days=5),
+                "ends_at": now + datetime.timedelta(days=10),
+            },
+            # --- Ended Events ---
+            {
+                "title": "رویداد افتتاحیه سینمایی باغ فردوس",
+                "description": "جشنواره خاتمه‌یافته موزه سینما در عمارت قاجاری باغ فردوس.",
+                "event_type": "historical",
+                "lat": 35.8080,
+                "lon": 51.4255,
+                "radius": 300.0,
+                "xp_reward": 100,
+                "starts_at": now - datetime.timedelta(days=10),
+                "ends_at": now - datetime.timedelta(days=3),
+            },
+            {
+                "title": "گردهمایی کاوشگران جمشیدیه",
+                "description": "رویداد پایان‌یافته بوستان صخره‌ای جمشیدیه.",
+                "event_type": "nature",
+                "lat": 35.8235,
+                "lon": 51.4645,
+                "radius": 400.0,
+                "xp_reward": 120,
+                "starts_at": now - datetime.timedelta(days=14),
+                "ends_at": now - datetime.timedelta(days=7),
+            },
+        ]
+
+        for item in events_data:
+            existing = session.query(ExplorationEvent).filter(ExplorationEvent.title == item["title"]).first()
+
+            if now < item["starts_at"]:
+                calc_status = "scheduled"
+            elif now >= item["ends_at"]:
+                calc_status = "ended"
+            else:
+                calc_status = "active"
+
+            geom_wkt = f"POINT({item['lon']} {item['lat']})"
+
+            if existing:
+                existing.description = item["description"]
+                existing.event_type = item["event_type"]
+                existing.status = calc_status
+                existing.latitude = item["lat"]
+                existing.longitude = item["lon"]
+                existing.radius_meters = item["radius"]
+                existing.geometry = WKTElement(geom_wkt, srid=4326)
+                existing.xp_reward = item["xp_reward"]
+                existing.starts_at = item["starts_at"]
+                existing.ends_at = item["ends_at"]
+                existing.is_active = True
+                existing.updated_at = datetime.datetime.utcnow()
+            else:
+                event_obj = ExplorationEvent(
+                    title=item["title"],
+                    description=item["description"],
+                    event_type=item["event_type"],
+                    status=calc_status,
+                    latitude=item["lat"],
+                    longitude=item["lon"],
+                    radius_meters=item["radius"],
+                    geometry=WKTElement(geom_wkt, srid=4326),
+                    xp_reward=item["xp_reward"],
+                    starts_at=item["starts_at"],
+                    ends_at=item["ends_at"],
+                    is_active=True,
+                )
+                session.add(event_obj)
+
+        session.commit()
+    finally:
+        if close_session:
+            session.close()

@@ -6,11 +6,12 @@ from app.core.database import Base, SessionLocal, engine, get_db
 from app.modules.auth.router import router as auth_router
 from app.modules.exploration import models as exploration_models
 from app.modules.exploration.router import router as exploration_router
-from app.modules.exploration.seed import seed_exploration_data
+from app.modules.exploration.seed import seed_exploration_data, seed_exploration_events
 from app.modules.fog_of_war import models as fog_models
 from app.modules.fog_of_war.router import router as fog_router
 from app.modules.gamification import models as game_models
 from app.modules.gamification.router import router as game_router
+from app.modules.leaderboard.router import router as leaderboard_router
 from app.modules.missions import models as missions_models
 from app.modules.missions.router import router as missions_router
 from app.modules.missions.service import seed_missions
@@ -70,11 +71,74 @@ try:
         conn.execute(text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS poi_type VARCHAR(20) DEFAULT 'standard';"))
         conn.execute(text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS is_secret BOOLEAN DEFAULT FALSE;"))
         conn.execute(text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_locations_geometry ON locations USING GIST (geometry);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_user_fog_maps_geom ON user_fog_maps USING GIST (unfogged_geometry);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_user_fog_maps_user ON user_fog_maps (user_id);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_discovered_areas_user_lat_lon ON discovered_areas (user_id, lat, lon);"))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS exploration_events (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(100) NOT NULL,
+                description TEXT NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                status VARCHAR(20) DEFAULT 'scheduled' NOT NULL,
+                latitude DOUBLE PRECISION NOT NULL,
+                longitude DOUBLE PRECISION NOT NULL,
+                radius_meters DOUBLE PRECISION DEFAULT 500.0 NOT NULL,
+                geometry geometry(Point,4326) NOT NULL,
+                xp_reward INTEGER DEFAULT 100 NOT NULL,
+                target_participants INTEGER DEFAULT 50,
+                target_xp INTEGER DEFAULT 5000,
+                community_reward_xp INTEGER DEFAULT 500,
+                starts_at TIMESTAMP NOT NULL,
+                ends_at TIMESTAMP NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        conn.execute(text("ALTER TABLE exploration_events ADD COLUMN IF NOT EXISTS target_participants INTEGER DEFAULT 50;"))
+        conn.execute(text("ALTER TABLE exploration_events ADD COLUMN IF NOT EXISTS target_xp INTEGER DEFAULT 5000;"))
+        conn.execute(text("ALTER TABLE exploration_events ADD COLUMN IF NOT EXISTS community_reward_xp INTEGER DEFAULT 500;"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_exploration_events_geometry ON exploration_events USING GIST (geometry);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_exploration_events_event_type ON exploration_events (event_type);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_exploration_events_status ON exploration_events (status);"))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS exploration_event_participations (
+                id SERIAL PRIMARY KEY,
+                event_id INTEGER NOT NULL REFERENCES exploration_events(id),
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                participated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                latitude DOUBLE PRECISION NOT NULL,
+                longitude DOUBLE PRECISION NOT NULL,
+                distance_meters DOUBLE PRECISION NOT NULL,
+                xp_awarded INTEGER DEFAULT 0 NOT NULL,
+                CONSTRAINT uq_user_event_participation UNIQUE (user_id, event_id)
+            );
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_event_participations_user_event ON exploration_event_participations (user_id, event_id);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_event_participations_event ON exploration_event_participations (event_id);"))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS exploration_event_activities (
+                id SERIAL PRIMARY KEY,
+                event_id INTEGER NOT NULL REFERENCES exploration_events(id),
+                user_id INTEGER REFERENCES users(id),
+                activity_type VARCHAR(50) NOT NULL,
+                title VARCHAR(100) NOT NULL,
+                description TEXT NOT NULL,
+                xp_earned INTEGER DEFAULT 0 NOT NULL,
+                progress_pct DOUBLE PRECISION,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+            );
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_event_activities_event ON exploration_event_activities (event_id);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_event_activities_created ON exploration_event_activities (created_at);"))
         conn.commit()
     Base.metadata.create_all(bind=engine)
     seed_exploration_data()
     with SessionLocal() as session:
         seed_missions(session)
+        seed_exploration_events(session)
 except Exception as exc:
     print("Database init info:", exc)
 
@@ -91,6 +155,7 @@ app.include_router(fog_router, prefix="/api/v1/fog", tags=["Fog of War"])
 app.include_router(game_router, prefix="/api/v1/gamification", tags=["Gamification"])
 app.include_router(exploration_router, prefix="/api/v1/exploration", tags=["Exploration"])
 app.include_router(missions_router, prefix="/api/v1", tags=["Missions"])
+app.include_router(leaderboard_router, prefix="/api/v1", tags=["Leaderboard"])
 
 
 @app.get("/health")

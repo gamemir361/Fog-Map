@@ -35,6 +35,18 @@ class XPEngine:
         }
 
     @staticmethod
+    def get_user_xp(db: Session, user_id: int) -> int:
+        """
+        Canonical accessor for user XP score.
+        Ensures consistency between user.score and user_score.total_points.
+        """
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and user.score is not None:
+            return user.score
+        user_score = db.query(UserScore).filter(UserScore.user_id == user_id).first()
+        return user_score.total_points if user_score else 0
+
+    @staticmethod
     def is_duplicate_event(db: Session, user_id: int, event_type: str, entity_id: str) -> bool:
         """
         Anti-farming check: Returns True if the user has already received XP for this (event_type, entity_id).
@@ -73,8 +85,7 @@ class XPEngine:
         if not user:
             user = User(id=user_id, username=f"explorer_{user_id}", score=0)
             db.add(user)
-            db.commit()
-            db.refresh(user)
+            db.flush()
 
         # Check Exploration Tracking Setting
         if getattr(user, "exploration_tracking_enabled", True) is False:

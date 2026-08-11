@@ -44,29 +44,32 @@ class FogRepository:
         self.db.add(discovery)
         return discovery
 
-    def get_user_coverage_stats(self, user_id: int):
-        # Calculate total area using PostGIS ST_Union and ST_Area
+    def get_user_coverage_stats(self, user_id: int, compute_union: bool = True):
+        # Calculate total area using PostGIS ST_Union and ST_Area when compute_union=True
         total_sqm = 0.0
         geojson_geom = None
 
-        try:
-            area_query = text(
-                """
-                SELECT ST_Area(ST_Union(unfogged_geometry)::geography) as area_sqm,
-                       ST_AsGeoJSON(ST_Union(unfogged_geometry)) as geojson
-                FROM user_fog_maps
-                WHERE user_id = :user_id
-                """
-            )
-            res = self.db.execute(area_query, {"user_id": user_id}).fetchone()
-            if res and res.area_sqm is not None:
-                total_sqm = float(res.area_sqm)
-            if res and res.geojson:
-                geojson_geom = json.loads(res.geojson)
-        except Exception as exc:
-            # Fallback estimation based on centroid counts if non-PostGIS
+        if compute_union:
+            try:
+                area_query = text(
+                    """
+                    SELECT ST_Area(ST_Union(unfogged_geometry)::geography) as area_sqm,
+                           ST_AsGeoJSON(ST_Union(unfogged_geometry)) as geojson
+                    FROM user_fog_maps
+                    WHERE user_id = :user_id
+                    """
+                )
+                res = self.db.execute(area_query, {"user_id": user_id}).fetchone()
+                if res and res.area_sqm is not None:
+                    total_sqm = float(res.area_sqm)
+                if res and res.geojson:
+                    geojson_geom = json.loads(res.geojson)
+            except Exception as exc:
+                centroids = self.get_user_centroids(user_id)
+                total_sqm = len(centroids) * 70685.8  # pi * 150^2
+        else:
             centroids = self.get_user_centroids(user_id)
-            total_sqm = len(centroids) * 70685.8  # pi * 150^2
+            total_sqm = len(centroids) * 70685.8
 
         total_sqkm = round(total_sqm / 1000000.0, 4)
         coverage_pct = round(min(100.0, (total_sqm / TEHRAN_TOTAL_AREA_SQM) * 100), 6)
@@ -79,10 +82,16 @@ class FogRepository:
         }
 
     def get_or_create_user_score(self, user_id: int, initial_points: int):
+        from app.modules.users.models import User
+        user = self.db.query(User).filter(User.id == user_id).first()
+        current_xp = user.score if (user and user.score is not None) else initial_points
+
         user_score = self.db.query(UserScore).filter(UserScore.user_id == user_id).first()
         if not user_score:
-            user_score = UserScore(user_id=user_id, total_points=initial_points, areas_discovered=1)
+            user_score = UserScore(user_id=user_id, total_points=current_xp, areas_discovered=1)
             self.db.add(user_score)
+        elif user and user.score is not None and user_score.total_points != user.score:
+            user_score.total_points = user.score
         return user_score
 
     def commit(self):

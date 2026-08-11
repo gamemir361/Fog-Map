@@ -1,12 +1,25 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.modules.gamification import models
+from app.core.deps import get_optional_current_user
+from app.modules.leaderboard.service import get_leaderboard_data
+from app.modules.users.models import User
 
 router = APIRouter()
 
+
 @router.get("/leaderboard")
-def get_leaderboard(db: Session = Depends(get_db)):
-    # 10 nafar e bartar ro bar asas e emtiyaz neshon mide
-    top_users = db.query(models.UserScore).order_by(models.UserScore.total_points.desc()).limit(10).all()
-    return {"status": "success", "leaderboard": top_users}
+def get_leaderboard(
+    type: str = Query("overall"),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    current_user_id = current_user.id if current_user else None
+    return get_leaderboard_data(
+        db=db,
+        leaderboard_type=type,
+        limit=limit,
+        current_user_id=current_user_id,
+    )

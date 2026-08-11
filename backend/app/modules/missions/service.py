@@ -3,12 +3,12 @@ import math
 from datetime import datetime
 from sqlalchemy.orm import Session
 
+from app.modules.exploration.models import DiscoveredArea, POI, UserPOIState
 from app.modules.exploration.repository import ExplorationRepository
+from app.modules.gamification.models import XPLog
+from app.modules.gamification.xp_engine import XPEngine
 from app.modules.missions.models import Mission
 from app.modules.missions.repository import MissionsRepository
-
-
-from app.modules.gamification.xp_engine import XPEngine
 
 
 def calculate_user_level(score: int):
@@ -28,43 +28,78 @@ def seed_missions(db: Session):
         repo.create_missions_bulk(
             [
                 Mission(
-                    title="کشف 3 منطقه",
-                    description="سه منطقه جدید را در نقشه کلان‌شهر کشف کنید",
+                    title="اولین قدم‌ها",
+                    description="۱۰ منطقه جدید را در کلان‌شهر کشف کنید",
                     event_type="discover_area",
-                    target=3,
-                    reward_points=30,
+                    target=10,
+                    reward_points=50,
                     badge_name="پایونیر کلان‌شهر",
                     badge_icon="🧭",
                 ),
                 Mission(
-                    title="پیدا کردن یک نقطه فرهنگی",
-                    description="یک POI دارای اتمسفر فرهنگی یا تاریخی را کشف کنید",
+                    title="کاشف شهر",
+                    description="۵۰ منطقه از نقشه شهر را از مه خارج کنید",
+                    event_type="discover_area",
+                    target=50,
+                    reward_points=150,
+                    badge_name="کاشف برجسته",
+                    badge_icon="🗺️",
+                ),
+                Mission(
+                    title="شهر زیر پاهای من",
+                    description="۱۰۰ منطقه شهری را فتح کنید",
+                    event_type="discover_area",
+                    target=100,
+                    reward_points=300,
+                    badge_name="سلطان کاوش",
+                    badge_icon="👑",
+                ),
+                Mission(
+                    title="نخستین کشف مکان",
+                    description="اولین مکان شاخص را در شهر پیدا و کشف کنید",
                     event_type="visit_poi",
-                    conditions_json=json.dumps({"category": "culture"}),
                     target=1,
-                    reward_points=20,
-                    badge_name="کاوشگر فرهنگ",
+                    reward_points=25,
+                    badge_name="جویاگر",
+                    badge_icon="📍",
+                ),
+                Mission(
+                    title="مجموعه‌دار اماکن",
+                    description="۵ مکان شاخص شهری را کشف و ثبت کنید",
+                    event_type="visit_poi",
+                    target=5,
+                    reward_points=75,
+                    badge_name="مجموعه‌دار مکان",
                     badge_icon="🏛️",
                 ),
                 Mission(
-                    title="کاوشگر طبیعت شهری",
-                    description="از یک مکان طبیعی و سرسبز شهری بازدید کنید",
+                    title="استاد کاوشگری",
+                    description="۱۰ مکان شاخص کلان‌شهر را کشف کنید",
+                    event_type="visit_poi",
+                    target=10,
+                    reward_points=150,
+                    badge_name="استاد کاوش",
+                    badge_icon="⭐",
+                ),
+                Mission(
+                    title="کاوشگر فرهنگ و تاریخ",
+                    description="یک مکان دارای اتمسفر فرهنگی یا تاریخی را کشف کنید",
+                    event_type="visit_poi",
+                    conditions_json=json.dumps({"category": "culture"}),
+                    target=1,
+                    reward_points=30,
+                    badge_name="کاوشگر فرهنگ",
+                    badge_icon="📜",
+                ),
+                Mission(
+                    title="دوست‌دار طبیعت",
+                    description="از یک بوستان یا مکان طبیعی و سرسبز بازدید کنید",
                     event_type="visit_poi",
                     conditions_json=json.dumps({"category": "nature"}),
                     target=1,
-                    reward_points=25,
+                    reward_points=30,
                     badge_name="دوست‌دار طبیعت",
                     badge_icon="🌿",
-                ),
-                Mission(
-                    title="تجربه طعم‌های شهری",
-                    description="یک نقطه پرانرژی با استریت‌فود یا کافه را کشف کنید",
-                    event_type="visit_poi",
-                    conditions_json=json.dumps({"category": "energy"}),
-                    target=1,
-                    reward_points=30,
-                    badge_name="شکم‌گرد شهر",
-                    badge_icon="☕",
                 ),
             ]
         )
@@ -77,7 +112,6 @@ def list_active_missions(db: Session):
 
 def update_user_missions(db: Session, user_id: int, action_type: str, context: dict = None):
     missions_repo = MissionsRepository(db)
-    exploration_repo = ExplorationRepository(db)
     active_missions = missions_repo.get_active_missions()
 
     for mission in active_missions:
@@ -94,21 +128,37 @@ def update_user_missions(db: Session, user_id: int, action_type: str, context: d
         should_update = False
 
         if action_type == "discover_area":
-            user_mission.progress += 1
+            disc_count = db.query(DiscoveredArea).filter(DiscoveredArea.user_id == user_id).count()
+            user_mission.progress = disc_count
             should_update = True
 
-        elif action_type == "visit_poi" and context:
+        elif action_type == "visit_poi":
             if mission.conditions_json:
                 try:
                     conds = json.loads(mission.conditions_json)
                     req_cat = conds.get("category")
-                    if req_cat and context.get("category") == req_cat:
-                        user_mission.progress += 1
+                    if req_cat:
+                        cat_count = (
+                            db.query(UserPOIState)
+                            .join(POI, UserPOIState.poi_id == POI.id)
+                            .filter(
+                                UserPOIState.user_id == user_id,
+                                UserPOIState.state == "discovered",
+                                POI.category == req_cat,
+                            )
+                            .count()
+                        )
+                        user_mission.progress = cat_count
                         should_update = True
                 except Exception:
                     pass
             else:
-                user_mission.progress += 1
+                total_pois = (
+                    db.query(UserPOIState)
+                    .filter(UserPOIState.user_id == user_id, UserPOIState.state == "discovered")
+                    .count()
+                )
+                user_mission.progress = total_pois
                 should_update = True
 
         if should_update and user_mission.progress >= mission.target:
@@ -120,7 +170,7 @@ def update_user_missions(db: Session, user_id: int, action_type: str, context: d
                 user_id,
                 "MISSION_COMPLETE",
                 entity_id=f"mission_{mission.id}",
-                reason=f"تکمیل ماموریت '{mission.title}'",
+                reason=f"تکمیل دستاورد '{mission.title}'",
                 custom_xp=mission.reward_points,
             )
 
@@ -143,15 +193,58 @@ def get_user_gamification_profile(db: Session, user_id: int = 1):
     badges = missions_repo.get_user_badges(user_id)
     user_missions = missions_repo.get_all_user_missions(user_id)
 
+    # 1. Calculate Real Exploration Stats
+    discovered_areas_cnt = db.query(DiscoveredArea).filter(DiscoveredArea.user_id == user_id).count()
+    discovered_pois_cnt = db.query(UserPOIState).filter(UserPOIState.user_id == user_id, UserPOIState.state == "discovered").count()
+
+    cat_rows = (
+        db.query(POI.category)
+        .join(UserPOIState, UserPOIState.poi_id == POI.id)
+        .filter(UserPOIState.user_id == user_id, UserPOIState.state == "discovered")
+        .distinct()
+        .all()
+    )
+    categories_cnt = len(cat_rows)
+
+    first_area = (
+        db.query(DiscoveredArea)
+        .filter(DiscoveredArea.user_id == user_id)
+        .order_by(DiscoveredArea.discovered_at.asc())
+        .first()
+    )
+    first_discovery_date = first_area.discovered_at.isoformat() if first_area and first_area.discovered_at else None
+
+    recent_log = (
+        db.query(XPLog)
+        .filter(XPLog.user_id == user_id)
+        .order_by(XPLog.timestamp.desc())
+        .first()
+    )
+    recent_activity_date = recent_log.timestamp.isoformat() if recent_log and recent_log.timestamp else None
+
+    explored_area_sqkm = round(discovered_areas_cnt * 0.0707, 2)
+
+    stats = {
+        "total_xp": score,
+        "level": level_stats["level"],
+        "discovered_areas_count": discovered_areas_cnt,
+        "discovered_pois_count": discovered_pois_cnt,
+        "explored_area_sqkm": explored_area_sqkm,
+        "discovered_categories_count": categories_cnt,
+        "first_discovery_date": first_discovery_date,
+        "recent_activity_date": recent_activity_date,
+    }
+
+    # 2. Milestones List
     mission_progress_list = []
     active_missions = missions_repo.get_active_missions()
-
     user_m_map = {um.mission_id: um for um in user_missions}
 
     for m in active_missions:
         um = user_m_map.get(m.id)
         prog = um.progress if um else 0
         is_comp = um.is_completed if um else False
+        comp_at = um.completed_at.isoformat() if (um and um.completed_at) else None
         mission_progress_list.append(
             {
                 "id": m.id,
@@ -163,6 +256,39 @@ def get_user_gamification_profile(db: Session, user_id: int = 1):
                 "badge_icon": m.badge_icon,
                 "progress": prog,
                 "is_completed": is_comp,
+                "completed_at": comp_at,
+            }
+        )
+
+    # 3. Real Recent Activity Feed from XPLog
+    xp_logs = (
+        db.query(XPLog)
+        .filter(XPLog.user_id == user_id)
+        .order_by(XPLog.timestamp.desc())
+        .limit(15)
+        .all()
+    )
+
+    activity_feed = []
+    for log in xp_logs:
+        icon = "📍"
+        if log.event_type == "DISCOVER_AREA":
+            icon = "🗺️"
+        elif log.event_type == "DISCOVER_POI":
+            icon = "🏛️"
+        elif log.event_type == "MISSION_COMPLETE":
+            icon = "🏆"
+        elif log.event_type == "COMPLETE_ROUTE":
+            icon = "🧭"
+
+        activity_feed.append(
+            {
+                "id": log.id,
+                "event_type": log.event_type,
+                "title": log.reason or "فعالیت کاوش",
+                "xp_value": log.xp_value,
+                "icon": icon,
+                "timestamp": log.timestamp.isoformat() if log.timestamp else None,
             }
         )
 
@@ -170,6 +296,7 @@ def get_user_gamification_profile(db: Session, user_id: int = 1):
         "user_id": user_id,
         "score": score,
         "level_stats": level_stats,
+        "stats": stats,
         "badges": [
             {
                 "name": b.badge_name,
@@ -179,4 +306,6 @@ def get_user_gamification_profile(db: Session, user_id: int = 1):
             for b in badges
         ],
         "missions": mission_progress_list,
+        "milestones": mission_progress_list,
+        "recent_activities": activity_feed,
     }
