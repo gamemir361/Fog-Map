@@ -142,13 +142,13 @@ def test_multiple_sequential_discoveries_persist_on_relogin():
     headers = {"Authorization": f"Bearer {token}"}
 
     # Discover 3 distinct points (>50m apart)
-    d1 = client.post("/api/v1/exploration/fog/discover", json={"lat": 35.7127, "lon": 51.4069}, headers=headers)
+    d1 = client.post("/api/v1/fog/discover", json={"lat": 35.7127, "lon": 51.4069}, headers=headers)
     assert d1.status_code == 200
 
-    d2 = client.post("/api/v1/exploration/fog/discover", json={"lat": 35.7200, "lon": 51.4150}, headers=headers)
+    d2 = client.post("/api/v1/fog/discover", json={"lat": 35.7200, "lon": 51.4150}, headers=headers)
     assert d2.status_code == 200
 
-    d3 = client.post("/api/v1/exploration/fog/discover", json={"lat": 35.7300, "lon": 51.4250}, headers=headers)
+    d3 = client.post("/api/v1/fog/discover", json={"lat": 35.7300, "lon": 51.4250}, headers=headers)
     assert d3.status_code == 200
 
     stats_before = client.get("/api/v1/fog/stats", headers=headers).json()

@@ -1,16 +1,15 @@
-## 2026-08-06T09:53:13Z
-You are Forensic Auditor 1 (teamwork_preview_auditor) for Milestone 1: Config & Backend Alignment.
-Working directory: d:/Fog-Map-agy/.agents/m1_auditor_1
+## 2026-08-13T11:56:29Z
+You are Forensic Auditor 1 (teamwork_preview_auditor) performing an integrity audit on Milestone 1 (M1: UrbanExplorer Tokens, CSS Variables & Typography Scale).
 
-Task:
-1. Read d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md and d:/Fog-Map-agy/PROJECT.md.
-2. Perform forensic integrity audit on all changes made in Milestone 1:
-   - frontend/src/config/fogConfig.js
-   - backend/app/modules/fog_of_war/service.py
-   - backend/app/modules/fog_of_war/repository.py
-   - backend/app/modules/exploration/models.py
-   - backend/pytest.ini
-3. Verify that all implementation code is genuine, functional, and authentic. Ensure NO test cheating, NO dummy/facade functions, NO hardcoded test pass assertions.
-4. Run pytest in backend/ and npm run build in frontend/ to confirm genuine build and test execution.
-5. Write your handoff report to d:/Fog-Map-agy/.agents/m1_auditor_1/handoff.md with explicit verdict CLEAN or INTEGRITY VIOLATION.
-6. Send a message to parent with your verdict and audit evidence.
+Working Directory: d:/Fog-Map-agy/.agents/m1_auditor_1
+Original Request File: d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md
+Project Plan File: d:/Fog-Map-agy/PROJECT.md
+Worker Handoff File: d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md
+
+Instructions:
+1. MUST read `d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md` and `d:/Fog-Map-agy/PROJECT.md`.
+2. Perform forensic audit on changes made to `frontend/src/index.css` and `frontend/index.html`:
+   - Check for hardcoded test results, fake CSS rules, facade tokens, or deceptive code.
+   - Verify that Google Fonts import and Material 3 CSS variables are genuine and functional.
+3. Render clear verdict: `CLEAN` or `INTEGRITY_VIOLATION` in `d:/Fog-Map-agy/.agents/m1_auditor_1/handoff.md`.
+4. Send a message to parent with your audit verdict and full evidence report.

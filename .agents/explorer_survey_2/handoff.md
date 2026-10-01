@@ -1,143 +1,190 @@
-# Handoff Report: Fog Parameter & Configuration Survey
+# Handoff Report — Frontend Layout & HUD Components Survey (Explorer 2)
 
-**Agent**: `explorer_survey_2` (survey explorer)  
-**Task**: Centralized Fog Configuration & Parameter Survey  
-**Date**: 2026-08-06  
+**Survey Target**: Fog Map Frontend Layout & HUD Components (`frontend/src/`)
+**Requirement Focus**: R2 & Acceptance Criteria 3 & 4 (HUD Safe-Zone Spacing, Side Drawer Layout, 44x44px Touch Targets, Glass Panel Layering & Styling, Responsive Breakpoints, Typography Scale)
+**Status**: Survey Complete (Read-Only)
 
 ---
 
 ## 1. Observation
 
-### 1.1 Code Locations of Fog Parameters
-- **Discovery Radius**:
-  - `frontend/src/App.jsx:247`: `turf.circle([lon, lat], 0.25, { steps: 24, units: 'kilometers' })` — Hardcoded radius of `0.25` km (250 meters).
-  - `backend/app/modules/exploration/models.py:18`: `radius = Column(Float, default=0.25)` — Default column value of 0.25 km.
-  - `backend/app/modules/fog_of_war/service.py:36`: `repo.add_fog_discovery(user_id, lat, lon, radius_meters=250.0)` — Default parameter 250.0m.
-  - `backend/app/modules/fog_of_war/repository.py:25`: `def add_fog_discovery(..., radius_meters: float = 250.0)`
-  - `backend/app/modules/fog_of_war/repository.py:66`: Fallback sqm calculation `total_sqm = len(centroids) * 196349.5` (`pi * 250.0^2`).
+### File & Component Catalog
+- **Root Layout & App State**: `frontend/src/App.jsx` (1,316 lines)
+- **Global Styles & Glassmorphism**: `frontend/src/index.css` (194 lines)
+- **Canvas Overlay**: `frontend/src/components/FogCanvasOverlay.jsx` (255 lines)
+- **Modals & Overlays**: `frontend/src/components/AuthModal.jsx`, `LandingPage.jsx`, `TrackingConfirmModal.jsx`
+- **Fog Configuration**: `frontend/src/config/fogConfig.js` (26 lines)
+- **Dependencies**: `frontend/package.json` (React 19, React-Leaflet 5, Leaflet 1.9.4, Turf 7.3.5, Axios; Tailwind CSS is **not** installed/configured).
 
-- **Duplicate Discovery Threshold**:
-  - `backend/app/modules/exploration/service.py:145`:
-    ```python
-    if get_distance_meters(lat, lon, area.lat, area.lon) < 50.0:
-        should_give_points = False
-        break
+---
+
+### Component Hierarchy (Z-Index Layering Map)
+```
+App.jsx (Root container, data-theme="dark|light")
+ ├── Main Leaflet Map Container (<MapContainer>, full viewport 100vw x 100vh)
+ │    ├── TileLayer (Google / Satellite / Carto Dark tile source)
+ │    ├── MapClicker (Event listener for discovery & route picking)
+ │    ├── MapFlyTo (Animation helper)
+ │    ├── HeatLayer (leaflet.heat integration)
+ │    ├── FogCanvasOverlay (zIndex: 400 - Canvas destination-out mask)
+ │    ├── Marker & Popup (zIndex: 600 - divIcon size 32x32px or 34x34px)
+ │    └── Polyline (Dashed navigation route)
+ ├── Floating Top Bar (zIndex: 1000, maxWidth: 580px, top: 16px, right: 16px, left: 16px)
+ │    ├── Glass Search Box (Search mode toggle: POIs vs Streets, Input, Clear ✕, Hamburger ☰)
+ │    ├── Search Dropdown Results (POIs & OpenStreetMap Streets)
+ │    └── Horizontal Category Pills Bar (8 category buttons + Smart Recommendation)
+ ├── Quick Action Buttons Stack (zIndex: 999, top: 16px, right: 16px)
+ │    ├── Drawer Toggle (40x40px)
+ │    ├── Theme Toggle (40x40px)
+ │    └── Center Tehran FlyTo (40x40px)
+ ├── Map Style Switcher (zIndex: 1000, bottom: 20px, left: 20px)
+ │    └── Glass Panel with Google / Satellite / Carto Dark buttons
+ ├── Status Toast Banner (zIndex: 1000, bottom: 20px, left: 50%, transform: translateX(-50%))
+ │    └── Glass Panel notification bar
+ ├── Side Drawer (zIndex: 2000, top: 0, right: 0, bottom: 0, width: 340px)
+ │    ├── Header (Title + Close ✕)
+ │    ├── User Profile & Authentication Card
+ │    ├── PostGIS Fog Statistics Card
+ │    ├── Dual Routing Panel A to B (Origin, Destination, Mood selector, Plan route)
+ │    ├── Architecture Settings (Exploration Tracking, Show Fog, Heatmap, Theme)
+ │    └── User Badges & Missions
+ ├── Ambient Nudge Floating Card (zIndex: 2000, fixed bottom: 90px, left: 50%)
+ ├── LandingPage Overlay (zIndex: 2500, fixed full screen)
+ ├── AuthModal Dialog (zIndex: 3000, fixed full screen backdrop)
+ └── TrackingConfirmModal Dialog (zIndex: 3500, fixed full screen backdrop)
+```
+
+---
+
+### Detailed Findings by Survey Category
+
+#### 1. HUD Safe-Zone Spacing (Requirement R2 / AC 3)
+- **Requirement**: Standard HUD Safe-Zone spacing must be **24px on desktop** and **12px on mobile**.
+- **Current Observation**:
+  - `App.jsx:604`: Floating Top Bar: `style={{ position: 'absolute', top: '16px', right: '16px', left: '16px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '580px', margin: '0 auto' }}`
+  - `App.jsx:1054`: Quick Action Stack: `style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 999, display: 'flex', flexDirection: 'column', gap: '8px' }}`
+  - `App.jsx:1078`: Map Style Switcher: `style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}`
+  - `App.jsx:1104`: Status Toast Banner: `style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000 ... }}`
+  - `App.jsx:1217`: Ambient Nudge Card: `style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)' ... }}`
+- **Deficit**: Hardcoded values (16px, 20px, 90px) are used across all viewports. No CSS variables or `@media` queries exist to handle 24px desktop vs 12px mobile safe-zone spacing.
+
+#### 2. Side Drawer Layout (Requirement R2)
+- **Requirement**: Side drawer width of **340px on desktop** transitioning to a **floating bottom sheet** on mobile devices.
+- **Current Observation**:
+  - `App.jsx:781-797`:
+    ```jsx
+    <div
+      className="glass-panel slide-in-right"
+      style={{
+        position: 'absolute',
+        top: '0',
+        right: '0',
+        bottom: '0',
+        width: '340px',
+        zIndex: 2000,
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        overflowY: 'auto',
+        borderRadius: '16px 0 0 16px',
+        borderLeft: '1px solid var(--panel-border)',
+      }}>
     ```
-    Hardcoded 50.0 meters check for awarding XP points (`should_give_points`).
-  - `backend/app/modules/fog_of_war/service.py:32`:
-    ```python
-    if distance < 50.0:
-        should_give_points = False
-        break
-    ```
+- **Deficit**: The desktop width is correctly set to `340px`, but on mobile viewports (< 768px) it remains a fixed 340px right drawer. It does **not** collapse into a floating mobile bottom sheet.
 
-- **Fog Color**:
-  - `frontend/src/App.jsx:796`: `fillColor: '#1a1a1a'` — Currently dark charcoal gray instead of target dark blue-gray palette (`#0f172a` / `rgba(15, 23, 42, 0.88)`).
+#### 3. Touch Targets (Acceptance Criterion 4)
+- **Requirement**: All interactive buttons, mode toggles, and map controls MUST have at least **44x44px touch targets**.
+- **Current Observation**:
+  - **Quick Action Stack Buttons** (`App.jsx:1058,1065,1072`): Hardcoded `width: '40px', height: '40px'` (Violates 44x44px minimum by 4px).
+  - **Search Mode Buttons** (`App.jsx:618,630`): `padding: '4px 10px'` (Computed height: ~26px).
+  - **Search Clear Button** (`App.jsx:659`): `fontSize: '14px'`, no padding (Computed size: ~20x20px).
+  - **Hamburger Drawer Toggle** (`App.jsx:672`): `padding: '6px 12px'` (Computed height: ~32px).
+  - **Category Pills** (`App.jsx:747`): `padding: '5px 12px'` (Computed height: ~28px).
+  - **Map Theme Buttons** (`App.jsx:1092`): `padding: '4px 8px'` (Computed height: ~24px).
+  - **POI Marker Icons** (`App.jsx:60,85`): Icon size `32x32px` or `34x34px` with inner circle `28x28px`.
+  - **Drawer Pick & Toggle Buttons** (`App.jsx:896,913,924,983,1007`): `padding: '4px 8px'` to `'6px 10px'` (Computed heights: ~22px - ~28px).
+  - **Drawer Close Button** (`App.jsx:804`): `fontSize: '18px'`, no padding (Computed hit area: ~24x24px).
+- **Deficit**: Every HUD control button, category pill, mode switch, marker hit target, and drawer action item falls below the 44x44px minimum touch target size requirement.
 
-- **Fog Opacity**:
-  - `frontend/src/App.jsx:797`: `fillOpacity: 0.88`.
-
-- **Blending Mode / Edge Feathering**:
-  - `frontend/src/App.jsx:798-800`: `fillRule: 'evenodd'`, `className: 'fog-blur'`.
-  - `frontend/src/index.css:135-139`:
+#### 4. Glass Panel Layering & Frosted Glass Styling (Requirement R1/R2 & AC 3)
+- **Requirement**: UrbanExplorer glassmorphism (`backdrop-filter: blur(12px)` to `14px`), Material 3 color tokens (`#89ceff`, `#0ea5e9`, `#0f1418`, `surface-container-high`), and clean layering.
+- **Current Observation**:
+  - `index.css:71-78`:
     ```css
-    .fog-blur {
-      filter: blur(14px);
-      pointer-events: none;
-      transition: all 0.5s ease-in-out;
+    .glass-panel {
+      background: var(--panel-glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+      border-radius: 16px;
     }
     ```
-
-### 1.2 Interactive Exploration Flow
-1. User clicks map (`App.jsx:270-313`), firing `axios.post('/api/v1/exploration/fog/discover', { user_id: 1, lat, lon })`.
-2. Backend checks distances to previous discovered points. If distance < 50m, `should_give_points = False` (0 XP delta).
-3. Backend records point in database and returns `all_points` list `[{"lat": ..., "lon": ...}]`.
-4. Frontend updates `discoveredPoints` state (`App.jsx:299-302`).
-5. `useMemo` (`fogPositions` at `App.jsx:240-266`) generates turf circles for each point, dissolves them via `turf.dissolve`, prepends `outerWorldRing` (global inverted mask), and passes positions to Leaflet `<Polygon>` with `fillRule: 'evenodd'`.
-
-### 1.3 Saved Discovery Data & Compatibility
-- Database table `discovered_areas` stores `id`, `user_id`, `lat`, `lon`, `radius`, `discovered_at`.
-- Table `user_fog_maps` stores PostGIS `unfogged_geometry` polygons.
-- Frontend receives array of points `[{lat, lon}]` and re-generates Leaflet fog circles dynamically using Turf.js on each render.
-
-### 1.4 Test Suite & Build Verification
-- Command `$env:PYTHONPATH="."; pytest` in `backend` returned:
-  `16 passed, 4 warnings in 9.77s`.
-- Command `npm run build` in `frontend` returned:
-  `✓ built in 253ms` producing `dist/index.html`, `dist/assets/index-BX08Aonx.css` (17.89 kB), `dist/assets/index-D-jkJPMn.js` (464.63 kB).
+  - `index.css:3-14`:
+    ```css
+    :root {
+      --bg-dark: #090d16;
+      --panel-glass: rgba(15, 23, 42, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-pink: #ec4899;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+    }
+    ```
+- **Deficit**:
+  - Material 3 tokens from UrbanExplorer spec (`#89ceff`, `#0ea5e9`, `#0f1418`) are not yet integrated into `:root` in `index.css`.
+  - Typography currently uses Google Font `Vazirmatn` (`index.css:1,63`). Fira Sans (for titles) and Inter (for data/badges) are missing.
+  - No media query breakpoints for responsive mobile layouts exist in `index.css` or `App.jsx`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Parameter Location & Hardcoding**:
-   - Observations 1.1 show that discovery radius (250m / 0.25km) and duplicate threshold (50m) are currently hardcoded directly inside component rendering code (`App.jsx`), ORM models (`models.py`), and backend service methods (`service.py`).
-   - Fog color (`#1a1a1a`) and opacity (`0.88`) are hardcoded in `App.jsx` pathOptions.
+1. **Observation**: `App.jsx` hardcodes `top: 16px`, `right: 16px`, `left: 16px`, `bottom: 20px` for all HUD containers.
+   **Deduction**: On mobile viewports (e.g. 375px width), 16px/20px creates awkward edge padding, whereas requirement specifies 12px mobile / 24px desktop. A CSS variable approach (e.g., `--hud-safe-zone: 12px` on mobile, `24px` on desktop `@media (min-width: 768px)`) is needed.
 
-2. **Radius Reduction (250m -> 150m) & Overlap Balance**:
-   - At 150m discovery radius and 50m duplicate threshold, two discovery points spaced 50m apart will have circle centers 50m apart. Since each circle has radius 150m, the overlap between consecutive circles is `(2 * 150) - 50 = 250 meters`.
-   - Therefore, a 50m duplicate threshold ensures complete circle overlap with zero visual gaps or disconnected islands along an exploration path.
+2. **Observation**: `App.jsx:788` fixes drawer width to `width: '340px'` anchored right, regardless of screen size.
+   **Deduction**: On mobile screens, 340px takes up nearly 90% of screen width sideways, obstructing map interaction. A responsive CSS rule or mobile state transformation is needed to turn the side drawer into a bottom sheet overlay on screen widths `< 768px`.
 
-3. **Backward Compatibility Guarantee**:
-   - Observation 1.3 confirms that saved user discovery points in `discovered_areas` store raw coordinate pairs (`lat`, `lon`).
-   - When historical points are fetched via `GET /api/v1/fog/stats` or returned via `POST /api/v1/exploration/fog/discover`, the frontend calculates circle polygons dynamically using `FOG_CONFIG.discoveryRadiusMeters`.
-   - Modifying the discovery radius to 150m in `fogConfig.js` will immediately and seamlessly update the rendered map radius for both historical and newly created discovery points without requiring any database schema migration or data transformation.
+3. **Observation**: Interactive buttons (Quick stack 40x40px, category pills 28px height, mode toggles 26px height, POI markers 32x32px) are sized purely for mouse clicks.
+   **Deduction**: Touch interactions on mobile devices will suffer from misclicks. All interactive elements require min-width / min-height of 44px or `min-h-[44px]` with flex/grid alignment, and leaflet divIcons require 44x44px touch targets.
 
-4. **Centralized Config Module Architecture**:
-   - Creating `frontend/src/config/fogConfig.js` (or `.ts`) consolidates all visual and procedural parameters into a single source of truth:
-     ```javascript
-     export const FOG_CONFIG = {
-       discoveryRadiusMeters: 150,
-       duplicateThresholdMeters: 50,
-       fogColor: '#0f172a',
-       fogOpacity: 0.88,
-       clearCenterOpacity: 0.0,
-       edgeFeatherWidth: 40,
-       blendingMode: 'evenodd',
-       enableNoise: true,
-       noiseOpacity: 0.04,
-     };
-     export default FOG_CONFIG;
-     ```
-   - Standard import path: `import FOG_CONFIG from './config/fogConfig'` (or `@/config/fogConfig`).
+4. **Observation**: `index.css` defines `:root` color tokens using non-UrbanExplorer values (`#090d16`, `#38bdf8`) and uses `Vazirmatn` font exclusively.
+   **Deduction**: To meet Acceptance Criteria for Design System Alignment, CSS custom properties in `index.css` must map `#89ceff` (primary), `#0ea5e9` (primary-container), `#0f1418` (surface), and import Fira Sans + Inter typography scales.
 
 ---
 
 ## 3. Caveats
 
-- PostGIS fallback logic in `backend/app/modules/fog_of_war/repository.py:66` uses `196349.5` (`pi * 250^2`) for non-PostGIS fallback coverage area estimations. When backend default radius is updated to 150m, this fallback formula should be updated to `pi * 150^2` (`70685.8` sqm).
-- Leaflet SVG `<Polygon>` with `filter: blur(14px)` provides soft edges, but for high-frequency noise/grain effect or multi-stage radial gradient feathering (Requirement R2/R4), a dedicated HTML5 `<canvas>` layer component or SVG filter element will yield superior performance and visual quality.
+- **Read-Only Scope**: No source code files in `frontend/src/` were edited during this survey.
+- **Backend Coupling**: All API endpoints (`/api/v1/exploration/pois`, `/api/v1/fog/stats`, `/api/v1/routes/dual-plan`) in `App.jsx` function independently of UI layout styles.
+- **Icon Libraries**: `package.json` relies on inline SVG/emojis rather than an icon package (e.g., `lucide-react`), which explains inline button styling.
 
 ---
 
 ## 4. Conclusion
 
-1. **Fog Parameters**: All 5 target parameters (radius, duplicate threshold, opacity, color, blending mode) are identified and isolated.
-2. **Radius & Threshold**: Reducing radius from 250m to 150m while maintaining 50m duplicate threshold produces continuous overlapping circles with smooth visual coverage.
-3. **Backward Compatibility**: Fully preserved. Stored points contain `(lat, lon)` coordinates; rendering logic re-computes Turf circles on-the-fly.
-4. **Config Location**: Place `fogConfig.js` at `frontend/src/config/fogConfig.js`. Import directly into `App.jsx` or specialized `FogLayer` canvas components.
+The current Fog Map frontend features a functional, feature-rich HUD architecture (Unified search, dual routing, mode selection, postGIS fog stats, Canvas overlay), but **fails Requirement R2 & Acceptance Criteria 3 & 4** on four structural design points:
+
+1. **HUD Safe-Zone Spacing**: Fixed 16px/20px offsets instead of responsive 24px (desktop) / 12px (mobile).
+2. **Side Drawer Mobile Layout**: Fixed 340px right panel without floating bottom sheet mobile transition.
+3. **Hit Target Sizes**: Interactive buttons and controls are 20px-40px high, below the required 44x44px touch target standard.
+4. **Design Tokens & Fonts**: Missing UrbanExplorer Material 3 color tokens (`#89ceff`, `#0ea5e9`, `#0f1418`) and Fira Sans / Inter font imports.
 
 ---
 
 ## 5. Verification Method
 
-To verify these findings and check project integrity:
+To independently verify these findings:
 
-1. **Run Backend Tests**:
-   ```powershell
-   cd d:/Fog-Map-agy/backend
-   $env:PYTHONPATH="."
-   pytest
-   ```
-   *Expected Result*: All 16 tests pass.
-
-2. **Run Frontend Production Build**:
-   ```powershell
-   cd d:/Fog-Map-agy/frontend
-   npm run build
-   ```
-   *Expected Result*: Clean build without TypeScript/JSX syntax errors.
-
-3. **Inspect File References**:
-   - Check `frontend/src/App.jsx` at line 247 (`0.25` km) and line 796 (`#1a1a1a`).
-   - Check `backend/app/modules/exploration/service.py` at line 145 (`50.0` meters).
+1. **Inspect CSS Variables & Fonts**:
+   - Inspect `frontend/src/index.css` lines 1-30 & 63. Notice font family is set solely to `Vazirmatn` and `:root` tokens lack `#89ceff` and `#0ea5e9`.
+2. **Inspect App.jsx HUD Elements**:
+   - Inspect `frontend/src/App.jsx` lines 604, 788, 1054, 1058, 1078, 1104. Observe fixed inline style pixel dimensions (16px, 20px, 40px, 340px).
+3. **Test Build**:
+   - Run `npm run build` in `frontend/` to verify Vite build output.

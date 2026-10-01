@@ -1,12 +1,12 @@
-# BRIEFING — 2026-08-06T13:11:20Z
+# BRIEFING — 2026-08-13T15:08:10+03:30
 
 ## Mission
-Sentinel monitoring and orchestration trigger for Fog of War premium atmospheric upgrade project.
+Integrate the UrbanExplorer Design System into Fog Map React frontend.
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: d:/Fog-Map-agy/.agents/sentinel
-- Orchestrator: 8decdb53-2884-436f-b053-2e0f613d14d9
+- Orchestrator: 80548f9e-ae09-4440-9d1e-839a9ba27f41
 - Victory Auditor: to be spawned on victory claim
 
 ## 🔒 Key Constraints
@@ -14,7 +14,7 @@ Sentinel monitoring and orchestration trigger for Fog of War premium atmospheric
 - Victory Audit is MANDATORY before reporting completion
 
 ## User Context
-- **Last user request**: Fog of War atmospheric visual upgrade and tuning parameters.
+- **Last user request**: Integrate UrbanExplorer Design System (Atmospheric Discovery HUD, Glassmorphism, Fira Sans / Inter typography, Material 3 color tokens, responsive HUD layout)
 - **Pending clarifications**: none
 - **Delivered results**: none
 
@@ -25,6 +25,11 @@ Sentinel monitoring and orchestration trigger for Fog of War premium atmospheric
 - **Triggered**: no
 - **Verdict**: pending
 - **Retry count**: 0
+
+## Task Routing
+- **Chosen path**: General
+- **Target subagent**: teamwork_preview_orchestrator (ID: 80548f9e-ae09-4440-9d1e-839a9ba27f41)
+- **Rationale**: Standard SWE task with multiple frontend design system requirements.
 
 ## Artifact Index
 - d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md — Verbatim user request record

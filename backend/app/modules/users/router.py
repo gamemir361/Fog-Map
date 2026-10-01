@@ -17,7 +17,10 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[schemas.UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     service = UserService(db)
     return service.get_all_users()
 
@@ -25,35 +28,22 @@ def get_all_users(db: Session = Depends(get_db)):
 @router.get("/settings", response_model=schemas.UserSettingsResponse)
 def get_user_settings(
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
-    target_user = current_user
-    if not target_user:
-        target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        return schemas.UserSettingsResponse(exploration_tracking_enabled=True, show_fog=True)
-    return target_user
+    return current_user
 
 
 @router.patch("/settings", response_model=schemas.UserSettingsResponse)
 def update_user_settings(
     settings_update: schemas.UserSettingsUpdate,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
-    target_user = current_user
-    if not target_user:
-        target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        return schemas.UserSettingsResponse(exploration_tracking_enabled=True, show_fog=True)
-
     if settings_update.exploration_tracking_enabled is not None:
-        target_user.exploration_tracking_enabled = settings_update.exploration_tracking_enabled
+        current_user.exploration_tracking_enabled = settings_update.exploration_tracking_enabled
     if settings_update.show_fog is not None:
-        target_user.show_fog = settings_update.show_fog
+        current_user.show_fog = settings_update.show_fog
 
     db.commit()
-    db.refresh(target_user)
-    return target_user
+    db.refresh(current_user)
+    return current_user

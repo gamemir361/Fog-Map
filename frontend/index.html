@@ -1,12 +1,101 @@
 <!doctype html>
-<html lang="en">
+<html class="dark" lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>UrbanExplorer - Fog Map & Heatmap</title>
+    <!-- Tailwind CSS with CDN & Material Extensions -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Sans:wght@400;700;800;900&family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "surface": "#0f1418",
+              "secondary": "#d0bcff",
+              "tertiary-container": "#de8712",
+              "primary-container": "#0ea5e9",
+              "secondary-fixed-dim": "#d0bcff",
+              "tertiary-fixed": "#ffdcbd",
+              "on-primary-fixed-variant": "#004c6e",
+              "on-secondary-container": "#c1a7ff",
+              "surface-dim": "#0f1418",
+              "on-tertiary-fixed-variant": "#693c00",
+              "on-tertiary-fixed": "#2c1600",
+              "on-error": "#690005",
+              "on-primary-fixed": "#001e2f",
+              "inverse-on-surface": "#2c3135",
+              "surface-container-lowest": "#0a0f13",
+              "vibrant-emerald": "#10b981",
+              "outline-variant": "#3e4850",
+              "on-background": "#dee3e9",
+              "tertiary-fixed-dim": "#ffb86e",
+              "surface-container-high": "#252b2f",
+              "slate-400": "#64748b",
+              "error": "#ffb4ab",
+              "on-primary-container": "#003751",
+              "secondary-container": "#5517be",
+              "error-container": "#93000a",
+              "on-secondary": "#3c0091",
+              "on-primary": "#00344d",
+              "inverse-primary": "#006591",
+              "on-secondary-fixed": "#23005c",
+              "surface-container": "#1b2024",
+              "primary": "#89ceff",
+              "primary-fixed": "#c9e6ff",
+              "surface-variant": "#30353a",
+              "primary-fixed-dim": "#89ceff",
+              "on-tertiary": "#492900",
+              "surface-container-highest": "#30353a",
+              "on-surface": "#dee3e9",
+              "amber-gold": "#f59e0b",
+              "background": "#0f1418",
+              "on-secondary-fixed-variant": "#5517be",
+              "surface-tint": "#89ceff",
+              "tertiary": "#ffb86e",
+              "on-error-container": "#ffdad6",
+              "slate-900": "#0f172a",
+              "on-surface-variant": "#bec8d2",
+              "inverse-surface": "#dee3e9",
+              "outline": "#88929b",
+              "surface-container-low": "#171c20",
+              "secondary-fixed": "#e9ddff",
+              "surface-bright": "#353a3e",
+              "on-tertiary-container": "#4d2b00"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            "spacing": {
+              "sidebar-width": "340px",
+              "unit": "4px",
+              "hud-margin-desktop": "24px",
+              "poi-card-width": "240px",
+              "hud-margin-mobile": "12px",
+              "gutter-md": "16px"
+            },
+            "fontFamily": {
+              "label-sm": ["Inter", "Vazirmatn", "sans-serif"],
+              "display-lg": ["Fira Sans", "Vazirmatn", "sans-serif"],
+              "display-lg-mobile": ["Fira Sans", "Vazirmatn", "sans-serif"],
+              "body-bold": ["Fira Sans", "Vazirmatn", "sans-serif"],
+              "badge-xs": ["Inter", "Vazirmatn", "sans-serif"],
+              "body-base": ["Fira Sans", "Vazirmatn", "sans-serif"],
+              "headline-md": ["Fira Sans", "Vazirmatn", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
   </head>
-  <body>
+  <body class="text-on-surface antialiased h-screen w-screen overflow-hidden transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

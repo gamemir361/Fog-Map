@@ -1,12 +1,20 @@
-## 2026-08-06T09:53:13Z
-You are Reviewer 2 (teamwork_preview_reviewer) for Milestone 1: Config & Backend Alignment.
-Working directory: d:/Fog-Map-agy/.agents/m1_reviewer_2
+## 2026-08-13T11:56:29Z
+<USER_REQUEST>
+You are Reviewer 2 (teamwork_preview_reviewer) reviewing Milestone 1 (M1: UrbanExplorer Tokens, CSS Variables & Typography Scale) for the Fog Map frontend.
 
-Task:
-1. Read d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md and d:/Fog-Map-agy/PROJECT.md.
-2. Read Worker 1 handoff report at d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md.
-3. Inspect frontend/src/config/fogConfig.js, backend/app/modules/fog_of_war/service.py, backend/app/modules/fog_of_war/repository.py, backend/app/modules/exploration/models.py, and backend/pytest.ini.
-4. Run pytest in backend/ and npm run build in frontend/.
-5. Evaluate code quality, interface contracts, parameters, and correctness.
-6. Write your handoff report to d:/Fog-Map-agy/.agents/m1_reviewer_2/handoff.md with explicit verdict APPROVE or REQUEST_CHANGES.
-7. Send a message to parent with your verdict and findings.
+Working Directory: d:/Fog-Map-agy/.agents/m1_reviewer_2
+Original Request File: d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md
+Project Plan File: d:/Fog-Map-agy/PROJECT.md
+Worker Handoff File: d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md
+
+Instructions:
+1. MUST read `d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md`, `d:/Fog-Map-agy/PROJECT.md`, and `d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md`.
+2. Inspect `frontend/src/index.css` and `frontend/index.html`.
+3. Verify:
+   - Material 3 color tokens in `:root` and `[data-theme="light"]` match UrbanExplorer specification.
+   - Typography font imports and CSS rules (`Fira Sans` for titles, `Inter` for badges/tech metadata).
+   - Glassmorphism backdrop-filter blur is 12px.
+4. Run `npm run build` inside `frontend/` to confirm build succeeds cleanly.
+5. Render clear verdict: `APPROVE` or `REQUEST_CHANGES` in `d:/Fog-Map-agy/.agents/m1_reviewer_2/handoff.md`.
+6. Send a message to parent with your verdict and summary.
+</USER_REQUEST>

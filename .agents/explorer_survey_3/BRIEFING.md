@@ -1,46 +1,40 @@
-# BRIEFING — 2026-08-06T13:15:30Z
+# BRIEFING — 2026-08-13T15:18:40Z
 
 ## Mission
-Survey project build tools, test setup, dependencies, environment, and identify exact build/test commands and potential issues.
+Survey Fog Map popups, theme switching, micro-interactions, CSS animations, and Requirement R3 / Acceptance Criteria.
 
 ## 🔒 My Identity
 - Archetype: teamwork_preview_explorer
-- Roles: Survey Explorer
+- Roles: Read-only investigator
 - Working directory: d:/Fog-Map-agy/.agents/explorer_survey_3
-- Original parent: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Milestone: Initial Survey Analysis
+- Original parent: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Milestone: Explorer Survey 3
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement code changes
-- Write reports/files to d:/Fog-Map-agy/.agents/explorer_survey_3
+- Read-only investigation — do NOT implement
+- Inspect popups, theme toggling, transitions, CSS animation classes, and typography in `frontend/src/`
 
 ## Current Parent
-- Conversation ID: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Updated: 2026-08-06T13:15:30Z
+- Conversation ID: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Updated: 2026-08-13T15:18:40Z
 
 ## Investigation State
-- **Explored paths**:
-  - `d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md`
-  - `d:/Fog-Map-agy/frontend/package.json`
-  - `d:/Fog-Map-agy/frontend/vite.config.js`
-  - `d:/Fog-Map-agy/frontend/src/App.jsx`
-  - `d:/Fog-Map-agy/backend/requirements.txt`
-  - `d:/Fog-Map-agy/backend/pytest.ini`
-  - `d:/Fog-Map-agy/backend/tests/` (unit & integration)
+- **Explored paths**: `frontend/src/App.jsx`, `frontend/src/index.css`, `frontend/src/components/LandingPage.jsx`, `frontend/src/components/AuthModal.jsx`, `frontend/src/components/TrackingConfirmModal.jsx`, `frontend/src/components/FogCanvasOverlay.jsx`, `frontend/src/config/fogConfig.js`, `frontend/src/main.jsx`, `frontend/index.html`, `frontend/package.json`
 - **Key findings**:
-  - Frontend build (`npm run build` in `frontend`) succeeds (Vite v8.1.3).
-  - Frontend lint (`npm run lint` in `frontend`) fails with 5 ESLint errors in `App.jsx` (nested component `MapClicker`, unused vars, set-state-in-effect).
-  - Frontend unit tests: No frontend test framework (Vitest/Jest) or test files exist in `frontend`.
-  - Backend tests (`pytest` in `backend`) fail when run as `pytest` directly due to empty `pytest.ini` (0 bytes) causing `ModuleNotFoundError: No module named 'app'`.
-  - Backend tests pass 16/16 when run via `python -m pytest` or when `pytest.ini` has `pythonpath = .`.
-  - Fog of War setup: Currently implemented as Leaflet `<Polygon>` with `@turf/turf` dissolve in `App.jsx`. No `fogConfig.js` or Canvas-based feathering exists yet.
-- **Unexplored areas**: None for survey scope.
+  - Theme state (`appTheme`) is managed in `App.jsx` and bound to `<div data-theme={appTheme}>`.
+  - CSS variables for dark/light themes are in `index.css`, but UrbanExplorer tokens (#89ceff, #0ea5e9, #0f1418) are mismatched/missing.
+  - Transitions vary between 200ms, 300ms, 500ms, and missing on marker hover.
+  - Keyframe animations (`markerDiscoverGlow`, `ping`, `pulseGlow`) exist in `index.css`.
+  - Leaflet POI popups display Title, Match Badge, Editorial Hook, Architectural Observation, Curator/Source attribution, and navigation button.
+  - Typography lacks Fira Sans (headings) and Inter (data/badges) font imports (only Vazirmatn is currently imported).
+- **Unexplored areas**: None within scope.
 
 ## Key Decisions Made
-- Verified exact build and test execution commands across backend and frontend environments.
-- Formulated handoff report with observations, logic chain, caveats, conclusion, and verification steps.
+- Completed full survey of popups, theme toggling, transitions, CSS keyframe animations, and typography hierarchy.
+- Documented all findings with exact file line references in `handoff.md`.
 
 ## Artifact Index
-- `d:/Fog-Map-agy/.agents/explorer_survey_3/DISPATCH.md` — Incoming task dispatch record
-- `d:/Fog-Map-agy/.agents/explorer_survey_3/BRIEFING.md` — Persistent working memory
-- `d:/Fog-Map-agy/.agents/explorer_survey_3/handoff.md` — Survey analysis and handoff report
+- `d:/Fog-Map-agy/.agents/explorer_survey_3/DISPATCH.md` — Dispatch record
+- `d:/Fog-Map-agy/.agents/explorer_survey_3/BRIEFING.md` — Working memory briefing
+- `d:/Fog-Map-agy/.agents/explorer_survey_3/progress.md` — Progress tracker
+- `d:/Fog-Map-agy/.agents/explorer_survey_3/handoff.md` — Complete 5-component survey handoff report

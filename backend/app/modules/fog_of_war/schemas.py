@@ -6,6 +6,15 @@ class LocationDiscover(BaseModel):
     user_id: Optional[int] = 1
     lat: float
     lon: float
+    accuracy: Optional[float] = None
+    timestamp: Optional[float] = None
+
+
+class FogDiscoverResponse(BaseModel):
+    status: str = "success"
+    message: str = "منطقه جدید کشف شد!"
+    all_points: List[Dict[str, float]] = []
+    coverage_stats: Optional[Dict[str, Any]] = None
 
 
 class FogStatsResponse(BaseModel):

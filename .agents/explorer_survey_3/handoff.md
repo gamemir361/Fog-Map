@@ -1,162 +1,103 @@
-# Survey Analysis & Handoff Report — Project Build Tools, Test Setup, Dependencies & Environment
+# Handoff Report — Explorer 3: Popups, Theme Switching & Micro-Interactions
+
+## Executive Summary
+Survey of the Fog Map frontend UI layer (`frontend/src/`) regarding map markers, POI popups, theme toggling, transitions, CSS animation keyframes, and Requirement R3 / Acceptance Criteria compliance.
+
+---
 
 ## 1. Observation
 
-### Repository Structure & Config Files
-- **Root Directory**: `d:/Fog-Map-agy`
-- **Frontend Directory**: `d:/Fog-Map-agy/frontend`
-  - `package.json`: Vite-based React project (`"type": "module"`, React `^19.2.7`, Leaflet `^1.9.4`, `@turf/turf` `^7.3.5`, Vite `^8.1.1`).
-  - `vite.config.js`: Exports default config using `@vitejs/plugin-react` with `/api` proxy target `http://127.0.0.1:8000`.
-  - `eslint.config.js`: ESLint configuration setup.
-  - `src/App.jsx`: Main single-file component (862 lines) handling Leaflet map, Turf.js fog polygon calculation, UI panels, and API calls.
-- **Backend Directory**: `d:/Fog-Map-agy/backend`
-  - `requirements.txt`: Dependencies: `fastapi`, `uvicorn`, `sqlalchemy`, `psycopg2-binary`, `geoalchemy2`, `requests`, `shapely`.
-  - `pytest.ini`: Empty file (0 bytes).
-  - `tests/`: Contains 8 test files across `unit/` and `integration/` (`test_exploration_service.py`, `test_missions_engine.py`, `test_recommendation_engine.py`, `test_exploration_router.py`, `test_fog_router.py`, `test_missions_router.py`, `test_routing_router.py`, `test_users_router.py`). Total 16 test cases.
+### A. Theme State Management & Light/Dark Theme Binding
+- **State Location**: Managed in `frontend/src/App.jsx` (line 164: `const [appTheme, setAppTheme] = useState('dark')`).
+- **Theme Attribute Binding**: Applied on the main container `div` (`App.jsx` line 601: `<div data-theme={appTheme} ...>`), rather than `document.documentElement` (`<html>`) or `body`.
+- **CSS Variable Definitions**: Defined in `frontend/src/index.css`:
+  - Default `:root` (Dark Theme) (lines 3–14): `--bg-dark: #090d16`, `--panel-glass: rgba(15, 23, 42, 0.82)`, `--panel-border: rgba(255, 255, 255, 0.12)`, `--accent-cyan: #38bdf8`, `--accent-purple: #a855f7`, etc.
+  - Light Theme overrides (lines 16–52): `[data-theme="light"]` overrides `--bg-dark` to `#f1f5f9`, `--panel-glass` to `rgba(255, 255, 255, 0.94)`, `--text-main` to `#0f172a`, and includes explicit rules for `.glass-panel`, inputs, buttons, and Leaflet popups.
+- **Modal Isolation**: Modals (`LandingPage.jsx`, `AuthModal.jsx`, `TrackingConfirmModal.jsx`) are fixed/absolute overlays that sit outside the theme container or hardcode dark background colors (e.g. `LandingPage.jsx` line 10: `radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)`).
 
-### Command Execution Results
+### B. Micro-Interactions & Transitions (300ms Transition Requirement)
+- **CSS Transitions**:
+  - `index.css` line 166: `.fog-blur` uses `transition: all 0.5s ease-in-out;` (500ms).
+  - `index.css` line 182: `.slide-in-right` uses `animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;` (300ms).
+  - `index.css` line 186–189: `.custom-poi-marker:hover` specifies `transform: scale(1.25) translateY(-4px);` but has **no `transition` property defined on `.custom-poi-marker`**, resulting in instantaneous scaling without smooth interpolation.
+- **Inline Style Transitions**:
+  - `App.jsx` line 62: Unknown POI marker inner circle uses `transition: all 0.3s ease;` (300ms).
+  - `App.jsx` line 87: Discovered POI marker icon uses `transition: all 0.2s ease;` (200ms).
+  - `LandingPage.jsx` line 112: Button uses `transition: 'transform 0.2s ease'`.
+  - Category pills, theme toggle buttons, quick action buttons, and drawer panels lack standard CSS smooth transition declarations for background color, border color, and scale.
 
-#### Command 1: Backend `pytest` (Direct invocation)
-- **Cwd**: `d:/Fog-Map-agy/backend`
-- **Command**: `pytest`
-- **Result**: Exit code `1` (8 errors during collection).
-- **Verbatim Error**:
-  ```text
-  ERROR collecting tests/integration/test_exploration_router.py
-  ImportError while importing test module 'D:\Fog-Map-agy\backend\tests\integration\test_exploration_router.py'.
-  Traceback:
-  tests\integration\test_exploration_router.py:2: in <module>
-      from app.main import app
-  E   ModuleNotFoundError: No module named 'app'
-  ...
-  !!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection !!!!!!!!!!!!!!!!!!!
-  ```
+### C. Map Markers, CSS Keyframes & POI Popups
+- **Marker Generator**: `createCustomCategoryIcon()` in `App.jsx` (lines 57–100) generates Leaflet `divIcon` elements:
+  - **Categories**: `culture` (#a855f7 / 🏛️), `nature` (#10b981 / 🌿), `energy` (#f59e0b / ⚡), `quiet` (#38bdf8 / ☕), `photography` (#ec4899 / 📸), `nightlife` (#6366f1 / 🌌), `direct` (#38bdf8 / 🧭), `default` (#38bdf8 / 📍).
+  - **Unknown POIs**: Renders ping animation ring (`animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;`) and a purple gradient icon with `❓`.
+  - **Discovered POIs**: 28px diameter category-colored badge, optional match percentage pill (`✨ {matchPercentage}٪`), and conditionally applies `.poi-discover-animated`.
+- **CSS Animations** (`index.css` lines 124–160):
+  - `@keyframes markerDiscoverGlow`: 0.85s scale/rotation/glow drop-shadow bounce animation (`0%` scale 0.4 -> `60%` scale 1.4 + cyan drop shadow -> `100%` scale 1).
+  - `@keyframes ping`: 75–100% scale 1.8 fade-out ring.
+  - `@keyframes pulseGlow`: 3s infinite box-shadow pulse for `.glow-btn`.
+- **POI Popups**: Rendered inside Leaflet `<Popup>` (`App.jsx` lines 1146–1195):
+  - Leaflet popup container styled via `index.css` lines 103–111 & 43–48.
+  - Content structure includes Title + Match Badge, Editorial Hook Card (`✨ editorial_hook`), Architectural Observation (`architectural_observation`), Curator & Source Attribution footer (`🏛️ پژوهش تحریریه` & `📜 منبع اسناد`), and a route destination action button (`🧭 انتخاب مقصد در مسیریاب`).
 
-#### Command 2: Backend `python -m pytest` (Python module invocation)
-- **Cwd**: `d:/Fog-Map-agy/backend`
-- **Command**: `python -m pytest`
-- **Result**: Exit code `0` (16 passed, 4 warnings).
-- **Output Snippet**:
-  ```text
-  collected 16 items
-
-  tests\integration\test_exploration_router.py ..                          [ 12%]
-  tests\integration\test_fog_router.py .                                   [ 18%]
-  tests\integration\test_missions_router.py ..                             [ 31%]
-  tests\integration\test_routing_router.py ..                              [ 43%]
-  tests\integration\test_users_router.py .                                 [ 50%]
-  tests\unit\test_exploration_service.py ....                              [ 75%]
-  tests\unit\test_missions_engine.py .                                     [ 81%]
-  tests\unit\test_recommendation_engine.py ...                             [100%]
-
-  ======================= 16 passed, 4 warnings in 3.82s ========================
-  ```
-
-#### Command 3: Frontend Build (`npm run build`)
-- **Cwd**: `d:/Fog-Map-agy/frontend`
-- **Command**: `npm run build`
-- **Result**: Exit code `0`.
-- **Output Snippet**:
-  ```text
-  vite v8.1.3 building client environment for production...
-  transforming...✓ 384 modules transformed.
-  rendering chunks...
-  computing gzip size...
-  dist/index.html                   0.45 kB │ gzip:   0.29 kB
-  dist/assets/index-BX08Aonx.css   17.89 kB │ gzip:   7.23 kB
-  dist/assets/index-D-jkJPMn.js   464.63 kB │ gzip: 145.80 kB
-
-  ✓ built in 256ms
-  ```
-
-#### Command 4: Frontend Lint (`npm run lint`)
-- **Cwd**: `d:/Fog-Map-agy/frontend`
-- **Command**: `npm run lint`
-- **Result**: Exit code `1` (6 problems: 5 errors, 1 warning).
-- **Verbatim Errors**:
-  ```text
-  D:\Fog-Map-agy\frontend\src\App.jsx
-    114:10  error    'routeWaypoints' is assigned a value but never used  no-unused-vars
-    115:10  error    'routeMetrics' is assigned a value but never used    no-unused-vars
-    200:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders  react-hooks/set-state-in-effect
-    203:6   warning  React Hook useEffect has a missing dependency: 'fetchPois'  react-hooks/exhaustive-deps
-    208:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders  react-hooks/set-state-in-effect
-    783:10  error    Error: Cannot create components during render (MapClicker declared inside App)  react-hooks/static-components
-  ```
-
-#### Command 5: Frontend Unit / Component Tests
-- **Observation**: `package.json` contains no test script or test framework dependencies (such as `vitest` or `jest`). No test files exist in `frontend/src/`.
+### D. Typography Hierarchy Enforcement
+- **Font Imports**: `index.css` line 1 imports **Vazirmatn** (`@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap');`).
+- **Global Font**: `index.css` line 63 sets `font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;`.
+- **Missing Fonts**: Neither **Fira Sans** (for headings/titles) nor **Inter** (for technical badges, metadata, and numeric data) is imported or configured in `index.css` or `index.html`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Backend Import Errors**:
-   - *Observation*: `pytest` directly in `backend` fails with `ModuleNotFoundError: No module named 'app'`. `pytest.ini` is an empty file.
-   - *Reasoning*: Pytest does not add the working directory (`d:/Fog-Map-agy/backend`) to `sys.path` by default unless invoked via `python -m pytest` or unless `pythonpath = .` is declared in `pytest.ini`.
-   - *Step to fix*: Add `[pytest]` and `pythonpath = .` to `d:/Fog-Map-agy/backend/pytest.ini` or execute tests via `python -m pytest`.
+1. **Theme State & Binding**:
+   - `App.jsx` line 601 applies `data-theme={appTheme}` to an inner wrapper `div`.
+   - *Reasoning*: Because `data-theme` is on a child `div` rather than `document.documentElement` or `body`, CSS rules in `index.css` targeting `body` or external modals (e.g. `LandingPage.jsx`, `AuthModal.jsx`) cannot properly inherit or react to theme attribute changes.
+   - *Impact*: Theme toggling only affects elements inside the main `App` wrapper, while modals and body background remain fixed to dark styling.
 
-2. **Backend Test Suite Integrity**:
-   - *Observation*: When executed with `python -m pytest`, all 16 backend test cases pass cleanly (unit tests and integration routers).
-   - *Reasoning*: The backend python environment (FastAPI, SQLAlchemy, Shapely) is fully installed and functional.
+2. **Transitions & Micro-Interactions**:
+   - `Requirement R3` specifies: "Smooth 300ms transitions for interactive elements, panels, and theme toggling."
+   - *Reasoning*: Currently, transition durations are fragmented across 200ms (`App.jsx` line 87), 300ms (`App.jsx` line 62), 500ms (`index.css` line 166), and omitted entirely on hover rules like `.custom-poi-marker:hover` (`index.css` line 186).
+   - *Impact*: Interactive controls feel abrupt or inconsistent during theme toggles and marker hovers.
 
-3. **Frontend Build & Dependency Setup**:
-   - *Observation*: `npm run build` succeeds in 256ms, outputting production assets to `dist/`.
-   - *Reasoning*: Vite dependencies (`react`, `leaflet`, `react-leaflet`, `@turf/turf`, `@vitejs/plugin-react`) and node_modules are intact and build cleanly without compiler or bundler errors.
+3. **Map Marker Pulse/Glow Keyframe Animations**:
+   - `createCustomCategoryIcon` dynamically attaches `poi-discover-animated` for newly discovered POIs and uses `ping` for unknown POIs.
+   - *Reasoning*: Keyframes `@keyframes markerDiscoverGlow`, `@keyframes ping`, and `@keyframes pulseGlow` are correctly declared in `index.css`, but need unified UrbanExplorer color token integration (e.g. primary `#89ceff`, primary-container `#0ea5e9`).
 
-4. **Frontend Quality & Architecture State**:
-   - *Observation*: `npm run lint` yields 5 ESLint errors in `src/App.jsx`. `MapClicker` component is defined inline inside `App()`, causing React Hook static-component errors. Unused variables `routeWaypoints` and `routeMetrics` exist.
-   - *Observation*: No unit test framework or test runner is present for frontend components.
-   - *Observation*: `fogConfig.js` does not exist yet. Fog rendering in `App.jsx` uses Leaflet `<Polygon>` with Turf `dissolve` rather than a Canvas-based feathering / organic noise engine requested in `ORIGINAL_REQUEST.md`.
+4. **Typography Hierarchy**:
+   - `Requirement R1 & R3` require: "font definitions (Fira Sans for headings/titles, Inter for data/badges)" and "Typography hierarchy enforcement across popups, badges, headlines, and technical metadata."
+   - *Reasoning*: Only `Vazirmatn` is imported in `index.css`. `Fira Sans` and `Inter` font Google Font imports and corresponding CSS utility classes (`.font-heading`, `.font-data`, `.font-body`) are missing.
 
 ---
 
 ## 3. Caveats
 
-- **No Caveats**: All required aspects (backend tests, frontend build, dependencies, configuration files, linting, and codebase structure) were directly executed and verified on the live system.
+- **Read-Only Scope**: This report is purely analytical. No source files were modified.
+- **Browser Visual Verification**: Visual rendering of browser frames was not performed via canvas screenshot; findings are based on complete inspection of source code and style declarations in `frontend/src/`.
 
 ---
 
 ## 4. Conclusion
 
-- **Backend Test Status**: 16 unit/integration tests exist and all 16 pass when run via `python -m pytest` (in `d:/Fog-Map-agy/backend`). Direct `pytest` execution requires adding `pythonpath = .` to `pytest.ini`.
-- **Frontend Build Status**: `npm run build` (in `d:/Fog-Map-agy/frontend`) succeeds cleanly.
-- **Frontend Test Status**: No frontend test framework or unit test files are currently configured.
-- **Identified Issues / Improvements Needed**:
-  1. **Backend `pytest.ini`**: Populating `pytest.ini` with `[pytest]\npythonpath = .` will allow direct `pytest` command invocation.
-  2. **Frontend Linting**: `App.jsx` has 5 lint errors (`MapClicker` defined inside render, unused state variables).
-  3. **Fog Implementation Gap**: `fogConfig.js` is missing and fog currently renders via basic Leaflet polygon dissolve rather than the requested Canvas-based atmospheric fog visual engine.
+The core structural components for map markers, POI popups, and basic theme state exist in `frontend/src/ App.jsx` and `index.css`. However, to achieve full compliance with Requirement R3 and UrbanExplorer Design System acceptance criteria:
+1. `Fira Sans` and `Inter` fonts must be imported and wired into headings, titles, badges, and technical metadata.
+2. A unified 300ms transition rule must be established across interactive buttons, theme toggling, and map marker hover states.
+3. `data-theme` attribute binding should be elevated to `document.documentElement` or top-level layout so modal overlays inherit theme context.
+4. UrbanExplorer color tokens (`#89ceff`, `#0ea5e9`, `#0f1418`) should be mapped into `index.css` `:root` and `[data-theme="light"]`.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify all findings, execute the following commands in the shell:
-
-1. **Verify Backend Tests**:
-   ```powershell
-   cd d:/Fog-Map-agy/backend
-   python -m pytest
+To verify these findings:
+1. Inspect `frontend/src/index.css`:
+   - Line 1: Check `@import` statement (only `Vazirmatn` present).
+   - Lines 3–22: Inspect `:root` and `[data-theme="light"]` CSS variables.
+   - Lines 124–156: Verify `@keyframes markerDiscoverGlow`, `@keyframes ping`, `@keyframes pulseGlow`.
+2. Inspect `frontend/src/App.jsx`:
+   - Line 57–100: Check `createCustomCategoryIcon()` implementation.
+   - Line 164 & 601: Check `appTheme` state and `data-theme` prop binding.
+   - Lines 1146–1195: Check Leaflet `<Popup>` structure.
+3. Execute build check:
+   ```bash
+   cd frontend && npm run build
    ```
-   *Expected Output*: `16 passed, 4 warnings`
-
-2. **Verify Direct Pytest Error**:
-   ```powershell
-   cd d:/Fog-Map-agy/backend
-   pytest
-   ```
-   *Expected Output*: `Interrupted: 8 errors during collection` (due to missing `pythonpath = .` in `pytest.ini`).
-
-3. **Verify Frontend Build**:
-   ```powershell
-   cd d:/Fog-Map-agy/frontend
-   npm run build
-   ```
-   *Expected Output*: `vite build` completes with `✓ built in ...` and creates `dist/`.
-
-4. **Verify Frontend Lint**:
-   ```powershell
-   cd d:/Fog-Map-agy/frontend
-   npm run lint
-   ```
-   *Expected Output*: ESLint output showing 6 problems (5 errors, 1 warning) in `src/App.jsx`.
+   (Build completes cleanly with zero Vite compilation errors).

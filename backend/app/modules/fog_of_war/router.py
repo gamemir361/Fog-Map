@@ -18,7 +18,14 @@ def discover_new_area(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     target_user_id = current_user.id if current_user else (location.user_id or 1)
-    return process_fog_discovery(db, target_user_id, location.lat, location.lon)
+    return process_fog_discovery(
+        db=db,
+        user_id=target_user_id,
+        lat=location.lat,
+        lon=location.lon,
+        accuracy=location.accuracy,
+        timestamp=location.timestamp,
+    )
 
 
 @router.get("/stats", response_model=schemas.FogStatsResponse)

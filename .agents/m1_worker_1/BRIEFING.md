@@ -1,52 +1,47 @@
-# BRIEFING — 2026-08-06T09:53:00Z
+# BRIEFING — 2026-08-13T15:24:00Z
 
 ## Mission
-Milestone 1 Worker 1: Config & Backend Alignment (creating fogConfig.js, updating backend radius/defaults to 150m, verifying tests/build). - COMPLETED
+Implement Milestone 1 (M1: UrbanExplorer Tokens, CSS Variables & Typography Scale) for Fog Map frontend.
 
 ## 🔒 My Identity
-- Archetype: teamwork_preview_worker
+- Archetype: implementer/qa/specialist
 - Roles: implementer, qa, specialist
 - Working directory: d:/Fog-Map-agy/.agents/m1_worker_1
-- Original parent: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Milestone: Milestone 1 - Config & Backend Alignment
+- Original parent: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Milestone: M1
 
 ## 🔒 Key Constraints
-- Minimal change principle.
-- Genuine implementation — no hardcoded test shortcuts.
-- Update fogConfig.js, fog_of_war/service.py, fog_of_war/repository.py, exploration/models.py, pytest.ini.
-- Run pytest and frontend npm run build, documenting output.
+- File ownership: Exclusively own `frontend/src/index.css` and `frontend/index.html`. Do not touch other files.
+- Integrity Mandate: Do not cheat, no dummy implementations.
 
 ## Current Parent
-- Conversation ID: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Updated: 2026-08-06T09:53:00Z
+- Conversation ID: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Updated: 2026-08-13T15:24:00Z
 
 ## Task Summary
-- **What to build**: frontend/src/config/fogConfig.js, backend radius adjustments (150m, 0.15km), pytest.ini check.
-- **Success criteria**: All backend tests pass (31/31), frontend builds cleanly without error.
-- **Interface contracts**: FOG_CONFIG object exports.
+- **What to build**: Google Fonts import, Dark & Light Mode CSS variables / tokens, Glassmorphism panel base updates, Typography utility classes.
+- **Success criteria**: Clean CSS integration, `npm run build` in `frontend` passes cleanly.
+- **Interface contracts**: PROJECT.md & ORIGINAL_REQUEST.md
+- **Code layout**: frontend/src/index.css, frontend/index.html
 
 ## Key Decisions Made
-- Created `frontend/src/config/fogConfig.js` with 9 parameters, JSDoc, `Object.freeze`, named and default export.
-- Updated `service.py`, `repository.py`, `models.py` for 150m default radius and 70685.8 SQM formula.
+- Updated `frontend/src/index.css` with Material 3 tokens for dark & light modes, font imports for Fira Sans, Inter, and Vazirmatn, `.glass-panel` blur 12px, typography utility classes (`font-heading`, `font-tech`).
+- Updated `frontend/index.html` with Google Fonts preconnect tags.
 
 ## Change Tracker
 - **Files modified**:
-  - `frontend/src/config/fogConfig.js` (created)
-  - `backend/app/modules/fog_of_war/service.py`
-  - `backend/app/modules/fog_of_war/repository.py`
-  - `backend/app/modules/exploration/models.py`
-- **Build status**: pytest: 31 passed; npm run build: exit code 0 (PASS)
+  - `frontend/src/index.css`: Material 3 tokens, Google fonts `@import`, `.glass-panel` blur(12px), typography scale.
+  - `frontend/index.html`: Google fonts preconnect tags and page title.
+- **Build status**: PASS (Vite build completed in 2.05s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: 31 passed, 0 failed in pytest; npm run build succeeded in 250ms.
+- **Build/test result**: PASS
 - **Lint status**: N/A
-- **Tests added/modified**: Verified all backend unit & integration tests.
+- **Tests added/modified**: N/A
 
 ## Loaded Skills
 - None
 
 ## Artifact Index
-- d:/Fog-Map-agy/.agents/m1_worker_1/BRIEFING.md — Persistent briefing file
-- d:/Fog-Map-agy/.agents/m1_worker_1/progress.md — Liveness heartbeat
-- d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md — Handoff report
+- `d:/Fog-Map-agy/.agents/m1_worker_1/handoff.md` — Complete handoff report for Milestone 1

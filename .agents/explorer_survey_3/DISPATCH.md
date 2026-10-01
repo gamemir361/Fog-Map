@@ -1,12 +1,19 @@
-## 2026-08-06T09:42:32Z
-You are a survey explorer (teamwork_preview_explorer).
-Working directory: d:/Fog-Map-agy/.agents/explorer_survey_3
+## 2026-08-13T15:14:36Z
+You are Explorer 3 (teamwork_preview_explorer) surveying the Fog Map popups, theme switching, and micro-interactions.
 
-Task:
-1. Read d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md.
-2. Inspect the repository in d:/Fog-Map-agy to analyze the project build tools, test setup, dependencies, and environment.
-3. Identify exact commands for running backend tests (pytest), frontend builds (npm run build or Vite build), and unit/component tests if present.
-4. Check package.json, vite.config, pyproject.toml / requirements.txt / pytest.ini, and test file locations.
-5. Identify any potential test failures, build issues, or missing dependencies.
-6. Write your complete analysis and handoff report to d:/Fog-Map-agy/.agents/explorer_survey_3/handoff.md.
-7. Send a message to your parent orchestrator with your findings.
+Your working directory: d:/Fog-Map-agy/.agents/explorer_survey_3
+Original Request file: d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md
+
+Instructions:
+1. MUST read `d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md` first.
+2. Investigate map markers, POI popups, theme toggling, transitions, and CSS animation classes in `frontend/src/`.
+3. Survey Requirement R3 & Acceptance Criteria:
+   - Smooth 300ms transitions for interactive elements, panels, and theme toggling.
+   - Light/Dark mode state management and theme attribute binding (`data-theme` or `.dark` class).
+   - Map marker pulse/glow CSS keyframe animations.
+   - Typography hierarchy enforcement across popups, badges, headlines, and technical metadata.
+4. Document existing state management for theme, popup components, map marker rendering logic, and keyframe/transition requirements.
+5. Write your complete findings to `d:/Fog-Map-agy/.agents/explorer_survey_3/handoff.md` and update `progress.md`.
+6. Send a message to parent with a brief summary referencing `handoff.md`.
+
+Do NOT edit any source code files. You are read-only.

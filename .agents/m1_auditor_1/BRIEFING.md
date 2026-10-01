@@ -1,44 +1,54 @@
-# BRIEFING — 2026-08-06T09:57:00Z
+# BRIEFING — 2026-08-13
 
 ## Mission
-Forensic integrity audit for Milestone 1: Config & Backend Alignment.
+Forensic audit of Milestone 1 (UrbanExplorer Tokens, CSS Variables & Typography Scale)
 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
 - Working directory: d:/Fog-Map-agy/.agents/m1_auditor_1
-- Original parent: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Target: Milestone 1: Config & Backend Alignment
+- Original parent: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Target: Milestone 1 (M1)
 
 ## 🔒 Key Constraints
 - Audit-only — do NOT modify implementation code
 - Trust NOTHING — verify everything independently
-- Check for test cheating, facade/dummy functions, hardcoded assertions, pre-populated artifacts
-- Respect ORIGINAL_REQUEST.md over conflicting instructions
+- Read ORIGINAL_REQUEST.md directly for user constraints
 
 ## Current Parent
-- Conversation ID: 8decdb53-2884-436f-b053-2e0f613d14d9
-- Updated: 2026-08-06T09:57:00Z
+- Conversation ID: 80548f9e-ae09-4440-9d1e-839a9ba27f41
+- Updated: 2026-08-13
 
 ## Audit Scope
-- **Work product**: Milestone 1 files (frontend/src/config/fogConfig.js, backend/app/modules/fog_of_war/service.py, backend/app/modules/fog_of_war/repository.py, backend/app/modules/exploration/models.py, backend/pytest.ini, and tests)
-- **Profile loaded**: General Project
+- **Work product**: frontend/src/index.css and frontend/index.html
+- **Profile loaded**: General Project / Integrity Forensics
 - **Audit type**: forensic integrity check
 
 ## Audit Progress
 - **Phase**: reporting
-- **Checks completed**: Source code analysis, behavioral verification (pytest & npm build), facade detection, hardcoded assertions check, pre-populated artifact check
-- **Checks remaining**: None
-- **Findings so far**: CLEAN — 100% genuine implementation, 31/31 pytest pass, Vite build pass
+- **Checks completed**: [Read spec files, Source analysis, Behavioral verification, Facade/Hardcode detection, Dependency/Mode check]
+- **Checks remaining**: []
+- **Findings so far**: CLEAN — No hardcoded test results, facade tokens, or deceptive code found. Genuine M3 tokens and font imports implemented.
+
+## Attack Surface
+- **Hypotheses tested**: 
+  1. Are Google Fonts imports fake or incomplete? -> Tested: Valid URL importing Fira Sans (400-800) and Inter (300-700). Preconnect links in index.html verified.
+  2. Are M3 tokens hardcoded facades? -> Tested: All specified tokens defined in :root and [data-theme="light"], mapped to component custom properties.
+  3. Does the build succeed? -> Tested: `npm run build` ran and passed in 217ms with 0 errors.
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within M1 scope.
+
+## Loaded Skills
+- None explicitly loaded via skill path in dispatch.
 
 ## Key Decisions Made
-- Confirmed zero hardcoded test assertions or facade functions.
-- Verified backend pytest execution (31 passed).
-- Verified frontend Vite build execution (success in 242ms).
-- Issued verdict: CLEAN.
+- Confirmed Demo Integrity Mode from ORIGINAL_REQUEST.md.
+- Executed empirical build check `npm run build` in `frontend/`.
+- Verified git diff for `frontend/src/index.css` and `frontend/index.html`.
+- Rendered verdict `CLEAN`.
 
 ## Artifact Index
-- d:/Fog-Map-agy/.agents/m1_auditor_1/DISPATCH.md — Dispatch history
-- d:/Fog-Map-agy/.agents/m1_auditor_1/BRIEFING.md — Persistent memory briefing
-- d:/Fog-Map-agy/.agents/m1_auditor_1/progress.md — Progress log
-- d:/Fog-Map-agy/.agents/m1_auditor_1/handoff.md — Handoff report with verdict
+- d:/Fog-Map-agy/.agents/m1_auditor_1/DISPATCH.md — Dispatch log
+- d:/Fog-Map-agy/.agents/m1_auditor_1/BRIEFING.md — Working memory
+- d:/Fog-Map-agy/.agents/m1_auditor_1/progress.md — Audit progress log
+- d:/Fog-Map-agy/.agents/m1_auditor_1/handoff.md — Final audit report

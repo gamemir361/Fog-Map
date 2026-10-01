@@ -1,129 +1,161 @@
-# Handoff Report: Fog of War System Survey & Visual Upgrade Specification
+# Handoff Report — UrbanExplorer Design System Integration Survey (Explorer 1)
 
 ## 1. Observation
 
-### Codebase Inventory & Current Implementation Analysis
-The codebase in `d:/Fog-Map-agy` was thoroughly inspected to identify all files, functions, lines of code, and visual mechanisms related to Fog of War rendering, map view, canvas overlays, and configuration.
-
-#### Key Files Identified:
-1. **`frontend/src/App.jsx`**:
-   - **Line 9-16**: `outerWorldRing` defines global bounds `[[-85, -180], [-85, 180], [85, 180], [85, -180], [-85, -180]]`.
-   - **Line 239-266**: `fogPositions` `useMemo` hook calculates dissolved GeoJSON polygon geometry using `@turf/turf` (`turf.circle`, `turf.dissolve`, `turf.featureCollection`). Radius is hardcoded to `0.25` km (250 meters) with 24 steps:
-     ```javascript
-     const circles = discoveredPoints.map(pt => {
-       const lat = Array.isArray(pt) ? pt[0] : pt.lat
-       const lon = Array.isArray(pt) ? pt[1] : pt.lon
-       return turf.circle([lon, lat], 0.25, { steps: 24, units: 'kilometers' })
-     })
-     ```
-   - **Line 790-803**: Leaflet `<Polygon>` component renders the dissolved fog positions using SVG paths:
-     ```jsx
-     {showFog && (
-       <Polygon
-         key={discoveredPoints.length}
-         positions={fogPositions}
-         pathOptions={{
-           stroke: false,
-           fillColor: '#1a1a1a',
-           fillOpacity: 0.88,
-           fillRule: 'evenodd',
-           interactive: false,
-           className: 'fog-blur'
-         }}
-       />
-     )}
-     ```
-
-2. **`frontend/src/index.css`**:
-   - **Line 4-5**: Defines root colors `--bg-dark: #090d16;` and `--panel-glass: rgba(15, 23, 42, 0.82);`.
-   - **Line 135-139**: `.fog-blur` class uses single CSS blur filter on SVG path:
-     ```css
-     .fog-blur {
-       filter: blur(14px);
-       pointer-events: none;
-       transition: all 0.5s ease-in-out;
-     }
-     ```
-
-3. **`backend/app/modules/fog_of_war/service.py`**:
-   - **Line 32**: `if distance < 50.0:` (50m duplicate threshold).
-   - **Line 36**: `repo.add_fog_discovery(user_id, lat, lon, radius_meters=250.0)` (250m default radius).
-
-4. **`backend/app/modules/exploration/service.py`**:
-   - **Line 145**: `if get_distance_meters(lat, lon, area.lat, area.lon) < 50.0:` (50m duplicate threshold).
-
-#### Identified Deficiencies & Missing Capabilities:
-- **No Centralized Configuration (`fogConfig.js`)**: Currently missing. Parameters (`discoveryRadiusMeters`, `duplicateThresholdMeters`, `fogColor`, `fogOpacity`, `edgeFeatherWidth`) are scattered across frontend JSX and backend Python.
-- **Suboptimal Palette**: Currently `#1a1a1a` (dark neutral grey/black) instead of the target dark blue-gray palette `#0f172a` / `rgba(15, 23, 42, 0.88)`.
-- **Center Opacity & Edge Feathering Defect**: CSS `filter: blur(14px)` on SVG paths blurs inward into the cleared holes, causing fog color to bleed into the center of explored circles (violating the 0% opacity center clarity requirement).
-- **Dark Seam Artifacts**: Turf `turf.dissolve` combined with SVG paths causes dark seam artifacts or fallback to un-cleared polygon on geometry exceptions.
-- **Missing Noise/Grain Effect**: No canvas noise or atmospheric grain effect exists.
+### File & Infrastructure Survey
+- **`frontend/index.html`**:
+  - Contains basic standard HTML structure without any `<link rel="stylesheet">` or preloading tags for external web fonts (`Fira Sans`, `Inter`). Title is `<title>frontend</title>` (lines 1–14).
+- **`frontend/package.json`**:
+  - Dependencies: `@turf/turf`, `axios`, `leaflet`, `leaflet.heat`, `react`, `react-dom`, `react-leaflet`, `vite` (lines 12–31).
+  - No CSS preprocessor or Tailwind CSS installed; standard CSS variable and vanilla CSS architecture.
+- **`frontend/src/index.css`**:
+  - Line 1: `@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap');`
+  - Lines 3–14: `:root` CSS variables defined:
+    ```css
+    :root {
+      --bg-dark: #090d16;
+      --panel-glass: rgba(15, 23, 42, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-pink: #ec4899;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+    }
+    ```
+  - Lines 16–22: `[data-theme="light"]` CSS variables defined:
+    ```css
+    [data-theme="light"] {
+      --bg-dark: #f1f5f9;
+      --panel-glass: rgba(255, 255, 255, 0.94);
+      --panel-border: rgba(0, 0, 0, 0.15);
+      --text-main: #0f172a;
+      --text-sub: #334155;
+    }
+    ```
+  - Line 63: Global font family rule set to `font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;`.
+  - Lines 71–78: `.glass-panel` base class uses `backdrop-filter: blur(14px)` and `-webkit-backdrop-filter: blur(14px)`.
+  - Line 106: Leaflet popup wrapper override uses `backdrop-filter: blur(12px) !important;`.
+- **`frontend/src/App.jsx`**:
+  - Hardcoded category colors in JavaScript object `CATEGORY_COLORS` (lines 34–43):
+    - `culture`: `#a855f7`, `nature`: `#10b981`, `energy`: `#f59e0b`, `quiet`: `#38bdf8`, `photography`: `#ec4899`, `nightlife`: `#6366f1`, `direct`: `#38bdf8`, `default`: `#38bdf8`.
+  - Theme state stored in `appTheme` ('dark' | 'light') applied as `data-theme={appTheme}` attribute on root wrapper `<div>` (line 601).
+- **`frontend/src/config/fogConfig.js`**:
+  - Fog parameters defined: `fogColor: '#0f172a'`, `fogOpacity: 0.88`, `discoveryRadiusMeters: 150`, `duplicateThresholdMeters: 50`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Centralized Configuration Extraction (`fogConfig.js`)**:
-   - Extracting all fog tuning parameters into `frontend/src/config/fogConfig.js` decouples visual styling and discovery thresholds from rendering components.
-   - When parameters in `fogConfig.js` change (e.g. `discoveryRadiusMeters: 150`, `fogColor: '#0f172a'`), all map components immediately reflect the change without code refactoring.
+1. **Material 3 Token Alignment Gap**:
+   - **Observation**: Requirement R1 mandates Material 3 color tokens: `primary: #89ceff`, `primary-container: #0ea5e9`, `surface: #0f1418`, `surface-container-high`, `vibrant-emerald`, and `amber-gold` in Light and Dark modes.
+   - **Analysis**: `:root` in `frontend/src/index.css` currently sets `--bg-dark: #090d16;` and `--accent-cyan: #38bdf8;`. Standardized M3 token names (`--md-sys-color-primary`, `--md-sys-color-primary-container`, `--md-sys-color-surface`, `--md-sys-color-surface-container-high`, `--md-sys-color-emerald`, `--md-sys-color-amber`) or explicit custom property aliases are missing.
+   - **Deduction**: `:root` and `[data-theme="light"]` must be augmented to declare explicit Material 3 color tokens for both dark (`#0f1418`) and light (`#f8fafc`/`#ffffff`) themes.
 
-2. **Transition from SVG Polygon to Offscreen/Custom Canvas 2D Overlay**:
-   - SVG path rendering in Leaflet forces full DOM path recreation and CSS SVG filter re-evaluations during map pan/zoom, causing frame drops on mobile and desktop.
-   - A Canvas 2D Overlay (`FogCanvasOverlay.jsx`) listening to Leaflet map draw events (`move`, `zoom`, `viewreset`) redrawing directly onto a full-screen `<canvas>` solves performance bottlenecks.
+2. **Typography Font Loading Gap**:
+   - **Observation**: Requirement R1 requires `Fira Sans` for headings/titles and `Inter` for technical badges and metadata. Currently, `index.css` line 1 only imports `Vazirmatn` from Google Fonts, and `index.html` has zero font links.
+   - **Analysis**: Without loading `Fira Sans` (weights 400, 500, 600, 700, 800) and `Inter` (weights 300, 400, 500, 600, 700), any CSS font-family rules referencing `Fira Sans` or `Inter` will fall back to system fonts.
+   - **Deduction**: The Google Fonts import in `frontend/src/index.css` (or `<link>` in `frontend/index.html`) must be updated to include `Fira Sans` and `Inter` alongside `Vazirmatn` (which serves as Persian text fallback). Utility CSS variables `--font-heading` (`Fira Sans`) and `--font-tech` (`Inter`) should be declared.
 
-3. **Multi-Stage Radial Feathering & Clean Hole Punching (`destination-out`)**:
-   - Using Canvas 2D context operation `ctx.globalCompositeOperation = 'destination-out'` allows circles to punch clean transparent holes out of a solid `rgba(15, 23, 42, 0.88)` fog fill.
-   - By constructing a radial gradient (`ctx.createRadialGradient(x, y, 0, x, y, radiusPx)`):
-     - Inner 0% to 70% radius: `rgba(0, 0, 0, 1.0)` alpha cutout (ensures **0% opacity fog** at the center — 100% crystal clear map view).
-     - Outer 70% to 100% radius (width 30-50px): Multi-stop smooth alpha gradient (`rgba(0,0,0,0.85)` -> `rgba(0,0,0,0.5)` -> `rgba(0,0,0,0.15)` -> `rgba(0,0,0,0.0)`).
-   - Because `destination-out` subtracts alpha directly from the canvas buffer, overlapping circles seamlessly merge into a unified clear region without **any dark seam artifacts**.
-
-4. **60 FPS Atmospheric Canvas Noise Effect**:
-   - Computing random noise per-pixel every frame kills mobile performance (< 30 FPS).
-   - Instead, pre-rendering a 256x256 pixel static noise texture onto an Offscreen Canvas during module initialization, and applying it via `ctx.createPattern(noiseCanvas, 'repeat')` with `ctx.globalCompositeOperation = 'source-atop'` renders high-definition noise strictly over remaining fog areas at a solid 60 FPS.
-
-5. **Radius & Overlap Optimization (150m Radius / 50m Threshold)**:
-   - Updating `discoveryRadiusMeters` to `150` meters in `fogConfig.js` and backend default `radius_meters=150.0` in `service.py`, combined with `50` meter duplicate threshold, provides 250m diameter overlap between consecutive points. This yields a smooth, continuous exploration trail with zero visual gaps.
+3. **Glassmorphism Blur Standardization Gap**:
+   - **Observation**: Current `.glass-panel` in `index.css` uses `blur(14px)` (line 73), while ambient nudge in `App.jsx` line 1223 and Leaflet popup line 106 use `blur(12px)`.
+   - **Analysis**: Requirement R1 specifies standard glassmorphism styling with `backdrop-filter: blur(12px)`.
+   - **Deduction**: Standardizing `.glass-panel` and overlay styles to `backdrop-filter: blur(12px)` and `-webkit-backdrop-filter: blur(12px)` in `index.css` aligns the UI with the UrbanExplorer Design System.
 
 ---
 
 ## 3. Caveats
 
-- **Leaflet Coordinate Projection**: Canvas drawing requires converting LatLng points to container pixel coordinates (`map.latLngToContainerPoint([lat, lon])`) and computing pixel radius based on map zoom scale.
-- **Backend Test Alignment**: Updating the default discovery radius in `backend/app/modules/fog_of_war/service.py` must maintain compatibility with backend unit and integration tests (`pytest`).
+- **Persian Text Layout**: `Vazirmatn` font is essential for Persian script legibility. Setting `font-family: 'Fira Sans', 'Vazirmatn', sans-serif` ensures Latin headings render in Fira Sans while Persian characters fall back gracefully to Vazirmatn.
+- **Read-Only Scope**: No source files were modified during this investigation, as strictly required.
 
 ---
 
 ## 4. Conclusion
 
-The Fog of War system can be upgraded into a premium gaming-grade atmospheric fog by:
-1. Creating `frontend/src/config/fogConfig.js` as the single source of truth for fog parameters.
-2. Creating `frontend/src/components/FogCanvasOverlay.jsx` for Canvas-based rendering with multi-stage radial feathering (`destination-out`) and tiled offscreen noise (`source-atop`).
-3. Updating `frontend/src/App.jsx` to replace the SVG `<Polygon>` with `FogCanvasOverlay`.
-4. Aligning `backend/app/modules/fog_of_war/service.py` default radius to `150.0` meters.
+To achieve complete alignment with Requirement R1 & Acceptance Criteria 1 & 2 of the UrbanExplorer Design System, the following edits to `frontend/src/index.css` (and font loading setup) are required:
+
+### Proposed `frontend/src/index.css` Token & Typography Architecture
+
+```css
+/* Google Fonts Loading for UrbanExplorer Typography */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;700;900&display=swap');
+
+:root {
+  /* Material 3 Color Tokens - Dark Mode */
+  --md-sys-color-primary: #89ceff;
+  --md-sys-color-primary-container: #0ea5e9;
+  --md-sys-color-surface: #0f1418;
+  --md-sys-color-surface-container-high: #1b2024;
+  --md-sys-color-vibrant-emerald: #10b981;
+  --md-sys-color-amber-gold: #f59e0b;
+
+  /* Legacy & Theme Compatibility Mapping */
+  --bg-dark: var(--md-sys-color-surface);
+  --panel-glass: rgba(27, 32, 36, 0.82);
+  --panel-border: rgba(137, 206, 255, 0.15);
+  --accent-cyan: var(--md-sys-color-primary);
+  --accent-emerald: var(--md-sys-color-vibrant-emerald);
+  --accent-amber: var(--md-sys-color-amber-gold);
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+
+  /* UrbanExplorer Typography Tokens */
+  --font-heading: 'Fira Sans', 'Vazirmatn', sans-serif;
+  --font-body: 'Inter', 'Vazirmatn', sans-serif;
+  --font-tech: 'Inter', monospace, sans-serif;
+}
+
+[data-theme="light"] {
+  /* Material 3 Color Tokens - Light Mode */
+  --md-sys-color-primary: #0284c7;
+  --md-sys-color-primary-container: #e0f2fe;
+  --md-sys-color-surface: #f8fafc;
+  --md-sys-color-surface-container-high: #ffffff;
+  --md-sys-color-vibrant-emerald: #059669;
+  --md-sys-color-amber-gold: #d97706;
+
+  --bg-dark: var(--md-sys-color-surface);
+  --panel-glass: rgba(255, 255, 255, 0.88);
+  --panel-border: rgba(14, 165, 233, 0.2);
+  --accent-cyan: var(--md-sys-color-primary);
+  --text-main: #0f172a;
+  --text-sub: #475569;
+}
+
+/* Glassmorphism Panel Base (R1 Blur 12px) */
+.glass-panel {
+  background: var(--panel-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 16px;
+}
+
+/* Typography Utility Classes */
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+}
+
+.tech-badge, .metadata-tag, .font-tech {
+  font-family: var(--font-tech);
+}
+```
 
 ---
 
 ## 5. Verification Method
 
-To independently verify the implementation:
-1. **Frontend Compilation**:
-   ```powershell
-   cd d:/Fog-Map-agy/frontend
-   npm run build
-   ```
-   Ensure build completes with zero errors.
-
-2. **Backend Unit & Integration Tests**:
-   ```powershell
-   cd d:/Fog-Map-agy/backend
-   pytest
-   ```
-   Ensure all tests pass.
-
-3. **Visual & Functional Invalidation Checks**:
-   - Verify fog color is dark blue-gray `#0f172a` (`rgba(15, 23, 42, 0.88)`).
-   - Verify center of cleared circles remains 100% transparent/clear (0% fog opacity).
-   - Verify soft radial edge feathering (30-50px width) along cloud borders.
-   - Verify zero dark seam artifacts when multiple discovery circles overlap.
-   - Verify map panning and zooming maintain 60 FPS.
+1. **Vite Build Verification**:
+   - Command: `cd d:/Fog-Map-agy/frontend && npm run build`
+   - Condition: Build completes with zero syntax or CSS parsing errors.
+2. **CSS Token Inspection**:
+   - Inspect computed CSS variables in browser dev tools on `:root` and `[data-theme="light"]`.
+   - Confirm `--md-sys-color-primary` evaluates to `#89ceff` in dark mode and `#0284c7` in light mode.
+   - Confirm `--md-sys-color-surface` evaluates to `#0f1418`.
+3. **Typography Verification**:
+   - Confirm Network tab downloads Fira Sans and Inter font files from Google Fonts.
+   - Verify headings render with `Fira Sans` font family and technical metadata/badges render with `Inter`.

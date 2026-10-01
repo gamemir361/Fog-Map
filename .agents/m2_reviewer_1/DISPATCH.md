@@ -1,12 +1,19 @@
-## 2026-08-06T10:01:29Z
-You are Reviewer 1 (teamwork_preview_reviewer) for Milestone 2: Atmospheric Fog Canvas Engine.
-Working directory: d:/Fog-Map-agy/.agents/m2_reviewer_1
+## 2026-08-13T15:44:00Z
+You are Reviewer 1 (teamwork_preview_reviewer) reviewing Milestone 2 (M2: Responsive HUD Safe-Zones, Side Drawer Refactor & 44x44px Touch Targets) for the Fog Map frontend.
 
-Task:
-1. Read d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md and d:/Fog-Map-agy/PROJECT.md.
-2. Read Worker 2 handoff report at d:/Fog-Map-agy/.agents/m2_worker_1/handoff.md.
-3. Inspect frontend/src/components/FogCanvasOverlay.jsx and frontend/src/config/fogConfig.js.
-4. Run npm run build in frontend/ and pytest in backend/.
-5. Evaluate code quality, Leaflet Canvas overlay architecture, two-pass mask compositing (lighter mask -> destination-out punch -> source-atop noise), 0% center opacity, edge feathering, devicePixelRatio handling, and RAF debouncing.
-6. Write your handoff report to d:/Fog-Map-agy/.agents/m2_reviewer_1/handoff.md with explicit verdict APPROVE or REQUEST_CHANGES.
-7. Send a message to parent with your verdict and findings.
+Working Directory: d:/Fog-Map-agy/.agents/m2_reviewer_1
+Original Request File: d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md
+Project Plan File: d:/Fog-Map-agy/PROJECT.md
+Worker Handoff File: d:/Fog-Map-agy/.agents/m2_worker_1/handoff.md
+
+Instructions:
+1. MUST read `d:/Fog-Map-agy/.agents/ORIGINAL_REQUEST.md`, `d:/Fog-Map-agy/PROJECT.md`, and `d:/Fog-Map-agy/.agents/m2_worker_1/handoff.md`.
+2. Inspect `frontend/src/App.jsx` and `frontend/src/index.css`.
+3. Verify:
+   - Responsive HUD safe-zone spacing: `--hud-safe-zone: 24px` desktop / `12px` mobile `@media (max-width: 768px)` applied to top bar, quick actions stack, map style switcher, toast banner, and ambient nudge.
+   - Side drawer layout: 340px desktop width anchored right transitioning to floating bottom sheet on mobile viewports (`max-width: 768px`).
+   - Touch targets: ALL interactive buttons, category pills, search toggles, hamburger menu, clear button, drawer pickers, and Leaflet map marker icons meet the 44x44px touch target requirement (`min-width: 44px; min-height: 44px;` or `iconSize: [44, 44]`).
+   - Glass panel layering & M3 token usage.
+4. Run `npm run build` inside `frontend/` to confirm build succeeds cleanly.
+5. Render clear verdict: `APPROVE` or `REQUEST_CHANGES` in `d:/Fog-Map-agy/.agents/m2_reviewer_1/handoff.md`.
+6. Send a message to parent with your verdict and summary.

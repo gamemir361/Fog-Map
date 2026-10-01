@@ -44,24 +44,24 @@ export function LandingPage({ onOpenLogin, onOpenRegister }) {
             fontSize: '40px',
             boxShadow: '0 10px 30px rgba(56, 189, 248, 0.4)',
           }}>
-          🧭
+          🌫️
         </div>
 
         {/* Header Title & Tagline */}
         <div>
           <h1
             style={{
-              fontSize: '24px',
-              fontWeight: 900,
-              background: 'linear-gradient(135deg, #38bdf8, #a855f7)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              margin: '0 0 8px 0',
-            }}>
-            کاشف پایتخت | Urban Explorer
+            fontSize: '24px',
+            fontWeight: 900,
+            background: 'linear-gradient(135deg, #38bdf8, #a855f7)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            margin: '0 0 8px 0',
+          }}>
+            نقشه مه‌جنگ و هیت‌مپ تهران
           </h1>
           <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-            پلتفرم اختصاصی کاوش شهری کلان‌شهر تهران. مناطق مه‌آلود را کنار بزنید، اماکن خاص را کشف کنید و سطح خود را ارتقا دهید.
+            سامانه کاوش کلان‌شهر تهران. در دنیای واقعی قدم بزنید، مه ناشناخته‌های شهر را کنار بزنید و هیت‌مپ مسیرهای خود را کشف کنید.
           </p>
         </div>
 
@@ -78,19 +78,19 @@ export function LandingPage({ onOpenLogin, onOpenRegister }) {
           }}>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '16px' }}>🌫️</span>
-            <span>مه‌جنگ داینامیک و شخصی‌سازی شده</span>
+            <span>مه‌جنگ بلورین روی نقشه</span>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>⚡</span>
-            <span>سیستم امتیازدهی و مأموریت‌ها</span>
+            <span style={{ fontSize: '16px' }}>🌡️</span>
+            <span>هیت‌مپ حرارتی نقاط کشف‌شده</span>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>📍</span>
-            <span>جستجوی هوشمند اماکن و معابر</span>
+            <span style={{ fontSize: '16px' }}>🛰️</span>
+            <span>ردیابی زنده با GPS و کلیک</span>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>🧭</span>
-            <span>مسیریابی دوگانه بر اساس مود</span>
+            <span style={{ fontSize: '16px' }}>📊</span>
+            <span>محاسبه مساحت با PostGIS</span>
           </div>
         </div>
 

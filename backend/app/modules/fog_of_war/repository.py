@@ -1,9 +1,9 @@
 import json
+from typing import List, Optional
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from app.modules.fog_of_war.models import UserFogMap
-from app.modules.gamification.models import UserScore
+from app.modules.fog_of_war.models import DiscoveredArea, UserFogMap
 
 TEHRAN_TOTAL_AREA_SQM = 730000000.0  # ~730 km²
 
@@ -11,6 +11,19 @@ TEHRAN_TOTAL_AREA_SQM = 730000000.0  # ~730 km²
 class FogRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    def list_discovered_areas(self, user_id: int) -> List[DiscoveredArea]:
+        return (
+            self.db.query(DiscoveredArea)
+            .filter(DiscoveredArea.user_id == user_id)
+            .order_by(DiscoveredArea.id.asc())
+            .all()
+        )
+
+    def create_discovered_area(self, user_id: int, lat: float, lon: float, radius: float = 150.0) -> DiscoveredArea:
+        record = DiscoveredArea(user_id=user_id, lat=lat, lon=lon, radius=radius)
+        self.db.add(record)
+        return record
 
     def get_user_centroids(self, user_id: int):
         return (
@@ -38,38 +51,35 @@ class FogRepository:
             pass
 
         # Use PostGIS function to convert EWKT string to geometry
-        geometry = text('SELECT ST_GeomFromEWKT(:wkt)')
-        geom_result = self.db.execute(geometry, {'wkt': wkt}).scalar()
+        geometry = text("SELECT ST_GeomFromEWKT(:wkt)")
+        geom_result = self.db.execute(geometry, {"wkt": wkt}).scalar()
         discovery = UserFogMap(user_id=user_id, unfogged_geometry=geom_result)
         self.db.add(discovery)
         return discovery
 
-    def get_user_coverage_stats(self, user_id: int, compute_union: bool = True):
-        # Calculate total area using PostGIS ST_Union and ST_Area when compute_union=True
+    def get_user_coverage_stats(self, user_id: int):
+        # Calculate total area using PostGIS ST_Union and ST_Area
         total_sqm = 0.0
         geojson_geom = None
 
-        if compute_union:
-            try:
-                area_query = text(
-                    """
-                    SELECT ST_Area(ST_Union(unfogged_geometry)::geography) as area_sqm,
-                           ST_AsGeoJSON(ST_Union(unfogged_geometry)) as geojson
-                    FROM user_fog_maps
-                    WHERE user_id = :user_id
-                    """
-                )
-                res = self.db.execute(area_query, {"user_id": user_id}).fetchone()
-                if res and res.area_sqm is not None:
-                    total_sqm = float(res.area_sqm)
-                if res and res.geojson:
-                    geojson_geom = json.loads(res.geojson)
-            except Exception as exc:
-                centroids = self.get_user_centroids(user_id)
-                total_sqm = len(centroids) * 70685.8  # pi * 150^2
-        else:
-            centroids = self.get_user_centroids(user_id)
-            total_sqm = len(centroids) * 70685.8
+        try:
+            area_query = text(
+                """
+                SELECT ST_Area(ST_Union(unfogged_geometry)::geography) as area_sqm,
+                       ST_AsGeoJSON(ST_Union(unfogged_geometry)) as geojson
+                FROM user_fog_maps
+                WHERE user_id = :user_id
+                """
+            )
+            res = self.db.execute(area_query, {"user_id": user_id}).fetchone()
+            if res and res.area_sqm is not None:
+                total_sqm = float(res.area_sqm)
+            if res and res.geojson:
+                geojson_geom = json.loads(res.geojson)
+        except Exception:
+            # Fallback estimation based on discovered_areas counts if non-PostGIS
+            areas = self.list_discovered_areas(user_id)
+            total_sqm = len(areas) * 70685.8  # pi * 150^2
 
         total_sqkm = round(total_sqm / 1000000.0, 4)
         coverage_pct = round(min(100.0, (total_sqm / TEHRAN_TOTAL_AREA_SQM) * 100), 6)
@@ -80,19 +90,6 @@ class FogRepository:
             "city_coverage_percentage": coverage_pct,
             "geojson_geometry": geojson_geom,
         }
-
-    def get_or_create_user_score(self, user_id: int, initial_points: int):
-        from app.modules.users.models import User
-        user = self.db.query(User).filter(User.id == user_id).first()
-        current_xp = user.score if (user and user.score is not None) else initial_points
-
-        user_score = self.db.query(UserScore).filter(UserScore.user_id == user_id).first()
-        if not user_score:
-            user_score = UserScore(user_id=user_id, total_points=current_xp, areas_discovered=1)
-            self.db.add(user_score)
-        elif user and user.score is not None and user_score.total_points != user.score:
-            user_score.total_points = user.score
-        return user_score
 
     def commit(self):
         self.db.commit()

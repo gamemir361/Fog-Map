@@ -1,94 +1,77 @@
-# Forensic Audit Report — Milestone 1: Config & Backend Alignment
+# Forensic Audit Report — Milestone 1 (M1: UrbanExplorer Tokens, CSS Variables & Typography Scale)
 
-**Work Product**: Milestone 1 Implementation Files
-- `frontend/src/config/fogConfig.js`
-- `backend/app/modules/fog_of_war/service.py`
-- `backend/app/modules/fog_of_war/repository.py`
-- `backend/app/modules/exploration/models.py`
-- `backend/pytest.ini`
-
-**Profile**: General Project
-**Verdict**: CLEAN
+**Work Product**: `frontend/src/index.css`, `frontend/index.html`  
+**Profile**: General Project / Integrity Forensics  
+**Integrity Mode**: Demo (per `ORIGINAL_REQUEST.md`)  
+**Verdict**: `CLEAN`
 
 ---
 
-## Phase Results
-
-| Check | Result | Details |
-|---|---|---|
-| 1. Hardcoded Output Detection | PASS | No hardcoded test assertions, expected output literals, or fake return constants found in source code. |
-| 2. Facade Detection | PASS | Functions in `service.py` and `repository.py` contain genuine PostGIS SQL queries, Haversine formula math, and SQLAlchemy ORM logic. |
-| 3. Pre-populated Artifact Detection | PASS | Workspace contains no pre-existing fake test logs or result artifacts. |
-| 4. Self-Certifying Tests | PASS | Tests in `test_fog_config_e2e.py` and `test_fog_router.py` perform real HTTP integration requests against FastAPI `TestClient`, checking exact mathematical boundaries (~49.5m vs >50m) and multi-user data isolation. |
-| 5. Behavioral Verification (Backend pytest) | PASS | Executed `pytest` in `backend/`: 31 passed in 7.70 seconds. |
-| 6. Behavioral Verification (Frontend build) | PASS | Executed `npm run build` in `frontend/`: Vite v8.1.3 built 384 modules in 242ms without errors. |
+### Phase Results
+- **Hardcoded Test Results Check**: PASS — No fake expected strings, pre-canned responses, or test-cheating shortcuts found.
+- **Facade Token & Implementation Check**: PASS — Genuine Material 3 custom properties and typography scale classes implemented in CSS.
+- **Pre-populated Artifact Check**: PASS — No pre-computed log/result files existed. Build artifact `dist/` compiled cleanly from source.
+- **Google Fonts & Preconnect Verification**: PASS — Genuine Google Fonts `@import` rule for `Fira Sans` (400-800) & `Inter` (300-700) along with preconnect link tags in `index.html`.
+- **Behavioral Build Execution**: PASS — Executed `npm run build` cleanly with exit code 0.
 
 ---
 
 ## 1. Observation
 
-1. **`frontend/src/config/fogConfig.js`**:
-   - Line 20-30: Exports frozen `FOG_CONFIG` object with parameter definitions:
-     `discoveryRadiusMeters: 150`, `duplicateThresholdMeters: 50`, `fogColor: '#0f172a'`, `fogOpacity: 0.88`, `clearCenterOpacity: 0.0`, `edgeFeatherWidthPx: 40`, `blendingMode: 'destination-out'`, `enableNoise: true`, `noiseOpacity: 0.045`.
-   - Properly annotated with JSDoc types.
-
-2. **`backend/app/modules/fog_of_war/service.py`**:
-   - Line 7-18: Implements Haversine distance computation `get_distance_meters(lat1, lon1, lat2, lon2)` using standard trigonometric formulas (`math.radians`, `math.sin`, `math.cos`, `math.atan2`).
-   - Line 32: Evaluates `distance < 50.0` for duplicate discovery threshold.
-   - Line 36: Invokes `repo.add_fog_discovery(user_id, lat, lon, radius_meters=150.0)`.
-
-3. **`backend/app/modules/fog_of_war/repository.py`**:
-   - Line 25-42: `add_fog_discovery` executes a PostGIS buffer query `ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :radius)` with fallback WKT creation.
-   - Line 66: Calculates fallback area using `len(centroids) * 70685.8` ($\pi \times 150^2 = 70685.83...$), aligned with the 150m radius.
-
-4. **`backend/app/modules/exploration/models.py`**:
-   - Line 18: Defines `DiscoveredArea` model with `radius = Column(Float, default=0.15)`.
-
-5. **`backend/pytest.ini`**:
-   - Sets `pythonpath = .` ensuring module imports resolve cleanly during `pytest`.
-
-6. **Test & Build Execution**:
-   - Command `pytest` in `d:/Fog-Map-agy/backend`: Output: `31 passed, 4 warnings in 7.70s`.
-   - Command `npm run build` in `d:/Fog-Map-agy/frontend`: Output: `vite v8.1.3 building client environment for production... ✓ 384 modules transformed. dist/assets/index-D-jkJPMn.js 464.63 kB. ✓ built in 242ms`.
-
----
+1. **Google Fonts Preconnects & Import (`frontend/index.html` lines 8–9 & `frontend/src/index.css` line 1)**:
+   - Preconnect tags added: `<link rel="preconnect" href="https://fonts.googleapis.com" />` and `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />`.
+   - `@import` rule verified: `@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;700;900&display=swap');`.
+2. **Material 3 Custom Properties (`frontend/src/index.css` lines 3–45)**:
+   - `:root` (Dark Theme):
+     - `--md-sys-color-primary`: `#89ceff`
+     - `--md-sys-color-primary-container`: `#0ea5e9`
+     - `--md-sys-color-surface`: `#0f1418`
+     - `--md-sys-color-surface-container-high`: `#1b2024`
+     - `--md-sys-color-vibrant-emerald`: `#10b981`
+     - `--md-sys-color-amber-gold`: `#f59e0b`
+     - `--font-heading`: `'Fira Sans', 'Vazirmatn', sans-serif`
+     - `--font-body`: `'Inter', 'Vazirmatn', sans-serif`
+     - `--font-tech`: `'Inter', 'Vazirmatn', sans-serif`
+   - `[data-theme="light"]` (Light Theme):
+     - `--md-sys-color-primary`: `#0284c7`
+     - `--md-sys-color-primary-container`: `#e0f2fe`
+     - `--md-sys-color-surface`: `#f8fafc`
+     - `--md-sys-color-surface-container-high`: `#ffffff`
+     - `--md-sys-color-vibrant-emerald`: `#059669`
+     - `--md-sys-color-amber-gold`: `#d97706`
+3. **Glassmorphism & Utility Rules (`frontend/src/index.css` lines 94–110)**:
+   - `.glass-panel` utilizes `backdrop-filter: blur(12px)` and `-webkit-backdrop-filter: blur(12px)`.
+   - Heading tags `h1-h6, .font-heading` bound to `var(--font-heading)`.
+   - Technical badge classes `.tech-badge, .metadata-tag, .font-tech` bound to `var(--font-tech)`.
+4. **Independent Build Command Output**:
+   - `npm run build` executed in `d:/Fog-Map-agy/frontend`:
+     `vite v8.1.3 building client environment for production...`
+     `✓ 116 modules transformed.`
+     `dist/assets/index-D9KK9ABE.css 19.28 kB`
+     `✓ built in 217ms` (Exit code: 0).
 
 ## 2. Logic Chain
 
-1. **Constraint Alignment**: `ORIGINAL_REQUEST.md` requires dynamic fog parameters (`fogConfig.js`), 150m discovery radius, 50m duplicate threshold, `#0f172a` palette, and passing backend/frontend tests.
-2. **Code Integrity**: Direct inspection confirms all 5 target files contain genuine, production-grade logic. No hardcoded return values, fake mocks, or facade patterns were found.
-3. **Execution Verification**: Empirical testing confirmed that both backend tests (`pytest`) and frontend production build (`npm run build`) execute cleanly and pass without errors.
-4. **Conclusion Support**: Since all forensic checks (Phase 1 source analysis, Phase 2 behavioral verification) yielded 100% pass results without any integrity violations, the overall verdict is CLEAN.
-
----
+1. **Empirical Verification of Code Authenticity**: Directly inspected `git diff` for `frontend/src/index.css` and `frontend/index.html`. Confirmed that all requested Material 3 hex tokens (`#89ceff`, `#0ea5e9`, `#0f1418`, `#1b2024`, `#10b981`, `#f59e0b` for Dark Mode; `#0284c7`, `#e0f2fe`, `#f8fafc`, `#ffffff`, `#059669`, `#d97706` for Light Mode) are defined as genuine CSS custom properties in `:root` and `[data-theme="light"]`.
+2. **Typography Scale Integration**: Verified that font families `Fira Sans` and `Inter` are loaded via standard Google Fonts API `@import` and applied via `:root` CSS variables and explicit selector groups (`h1..h6`, `.tech-badge`, etc.).
+3. **Absence of Prohibited Forensic Patterns**:
+   - No hardcoded test responses or strings designed to spoof automated tests.
+   - No facade token declarations (all tokens are wired into standard layout variable aliases `--bg-dark`, `--accent-cyan`, etc. and CSS classes).
+   - No pre-populated build artifacts or pre-canned log outputs.
+4. **Behavioral Build Integrity**: Executed `npm run build` independently from terminal, confirming that Vite compiles the CSS and JS bundles without syntax or parsing errors.
 
 ## 3. Caveats
 
-- PostGIS spatial query execution falls back to mathematical centroid estimation when testing in environments without an active PostGIS database extension. This fallback (`len(centroids) * 70685.8`) was verified to be mathematically accurate for a 150m radius.
-
----
+- No caveats. The audit scope for M1 is limited to `frontend/src/index.css` and `frontend/index.html`, both of which were completely inspected and verified.
 
 ## 4. Conclusion
 
-**Final Verdict**: **CLEAN**
-
-Milestone 1 (Config & Backend Alignment) passes all forensic integrity checks. The code is genuine, functional, and fully aligned with the requirements in `ORIGINAL_REQUEST.md`.
-
----
+Milestone 1 work product passes all forensic integrity checks with a verdict of **`CLEAN`**. All Material 3 color tokens, Google Fonts imports, CSS typography variables, and glassmorphism panel styles are authentic, functional, and fully match the project specification in `PROJECT.md` and `ORIGINAL_REQUEST.md`.
 
 ## 5. Verification Method
 
 To independently verify this audit:
-1. Run backend tests:
-   ```bash
-   cd d:/Fog-Map-agy/backend
-   pytest
-   ```
-   *Expected outcome*: 31 passed in ~7-8 seconds.
-
-2. Run frontend build:
-   ```bash
-   cd d:/Fog-Map-agy/frontend
-   npm run build
-   ```
-   *Expected outcome*: Vite build completes with exit code 0.
+1. Run build verification:
+   `cd frontend && npm run build` (Exit Code 0 expected)
+2. Inspect CSS token definitions:
+   `view_file frontend/src/index.css` (lines 1 to 45) to verify `:root` and `[data-theme="light"]` custom properties.

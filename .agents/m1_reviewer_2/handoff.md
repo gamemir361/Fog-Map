@@ -1,106 +1,78 @@
-# Handoff Review Report — Reviewer 2 (Milestone 1: Config & Backend Alignment)
+# Handoff Report — M1 Review (Reviewer 2)
 
 ## 1. Observation
 
-### Verified Files & Code Details
-1. **`frontend/src/config/fogConfig.js`**:
-   - Explicitly inspected `d:/Fog-Map-agy/frontend/src/config/fogConfig.js`.
-   - Contains JSDoc type definitions (`FogConfig`) and `export const FOG_CONFIG = Object.freeze(...)` along with default export `export default FOG_CONFIG`.
-   - Verified configuration schema values:
-     - `discoveryRadiusMeters`: `150`
-     - `duplicateThresholdMeters`: `50`
-     - `fogColor`: `'#0f172a'`
-     - `fogOpacity`: `0.88`
-     - `clearCenterOpacity`: `0.0`
-     - `edgeFeatherWidthPx`: `40`
-     - `blendingMode`: `'destination-out'`
-     - `enableNoise`: `true`
-     - `noiseOpacity`: `0.045`
+- **Material 3 Color Tokens (`frontend/src/index.css` lines 3–45)**:
+  - Dark Mode (`:root`):
+    - `--md-sys-color-primary`: `#89ceff` (Line 5)
+    - `--md-sys-color-primary-container`: `#0ea5e9` (Line 6)
+    - `--md-sys-color-surface`: `#0f1418` (Line 7)
+    - `--md-sys-color-surface-container-high`: `#1b2024` (Line 8)
+    - `--md-sys-color-vibrant-emerald`: `#10b981` (Line 9)
+    - `--md-sys-color-amber-gold`: `#f59e0b` (Line 10)
+  - Light Mode (`[data-theme="light"]`):
+    - `--md-sys-color-primary`: `#0284c7` (Line 30)
+    - `--md-sys-color-primary-container`: `#e0f2fe` (Line 31)
+    - `--md-sys-color-surface`: `#f8fafc` (Line 32)
+    - `--md-sys-color-surface-container-high`: `#ffffff` (Line 33)
+    - `--md-sys-color-vibrant-emerald`: `#059669` (Line 34)
+    - `--md-sys-color-amber-gold`: `#d97706` (Line 35)
 
-2. **`backend/app/modules/fog_of_war/service.py`**:
-   - Inspected lines 32 and 36.
-   - Line 32 retains `if distance < 50.0:` for duplicate discovery threshold.
-   - Line 36 passes `radius_meters=150.0` to `repo.add_fog_discovery`.
+- **Typography & Font Imports (`frontend/src/index.css` & `frontend/index.html`)**:
+  - `@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;700;900&display=swap');` (Line 1)
+  - `--font-heading`: `'Fira Sans', 'Vazirmatn', sans-serif` (Line 23)
+  - `--font-tech`: `'Inter', 'Vazirmatn', sans-serif` (Line 25)
+  - `h1, h2, h3, h4, h5, h6, .font-heading { font-family: var(--font-heading); }` (Lines 104–106)
+  - `.tech-badge, .metadata-tag, .font-tech { font-family: var(--font-tech); }` (Lines 108–110)
+  - HTML preconnect links for `fonts.googleapis.com` and `fonts.gstatic.com` in `frontend/index.html` (Lines 8–9).
 
-3. **`backend/app/modules/fog_of_war/repository.py`**:
-   - Inspected lines 25 and 66.
-   - Line 25 signature is `def add_fog_discovery(self, user_id: int, lat: float, lon: float, radius_meters: float = 150.0):`.
-   - Line 66 fallback SQM formula is `total_sqm = len(centroids) * 70685.8` ($\pi \times 150^2 \approx 70685.8347$).
+- **Glassmorphism Styling (`frontend/src/index.css` lines 94–101)**:
+  - `.glass-panel`: `backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);`
+  - Graceful fallback for non-supporting browsers added via `@supports not (backdrop-filter: blur(10px))` (Lines 112–116).
 
-4. **`backend/app/modules/exploration/models.py`**:
-   - Inspected line 18.
-   - `DiscoveredArea` model radius column default is `radius = Column(Float, default=0.15)` (0.15 km = 150 m).
-
-5. **`backend/pytest.ini`**:
-   - Inspected lines 1-2: `[pytest]` header and `pythonpath = .`.
-
-### Command Executions & Results
-1. **Backend Unit & Integration Tests**:
-   - Command: `pytest` in `d:/Fog-Map-agy/backend`
-   - Result: Exit code 0, **31 passed**, 4 deprecation warnings in 10.14s.
-   - Executed test files:
-     - `tests\integration\test_exploration_router.py` (2 passed)
-     - `tests\integration\test_fog_config_e2e.py` (15 passed)
-     - `tests\integration\test_fog_router.py` (1 passed)
-     - `tests\integration\test_missions_router.py` (2 passed)
-     - `tests\integration\test_routing_router.py` (2 passed)
-     - `tests\integration\test_users_router.py` (1 passed)
-     - `tests\unit\test_exploration_service.py` (4 passed)
-     - `tests\unit\test_missions_engine.py` (1 passed)
-     - `tests\unit\test_recommendation_engine.py` (3 passed)
-
-2. **Frontend Production Build**:
-   - Command: `npm run build` in `d:/Fog-Map-agy/frontend`
-   - Result: Exit code 0, 384 modules transformed, built in 252ms.
-
----
+- **Build Output**:
+  - Command: `cd frontend && npm run build`
+  - Output: Exit code 0, built in 246ms cleanly without warnings or errors.
 
 ## 2. Logic Chain
 
-1. **Parameter Alignment & Decoupling**:
-   - Extracting all parameters into `frontend/src/config/fogConfig.js` creates a single source of truth for fog visualization and discovery parameters. Enforcing immutability via `Object.freeze` prevents unexpected side effects at runtime.
-   - Updating backend discovery radius from 250m to 150m across `service.py`, `repository.py`, and `models.py` guarantees server-side discovery polygons and fallback area calculations align perfectly with the frontend config.
-   - Retaining the 50.0m duplicate check ensures points and XP are awarded only when user discovers points outside existing clusters, avoiding XP inflation while maintaining a smooth visual trail.
-
-2. **Integrity & Adversarial Analysis**:
-   - **Hardcoding / Facade check**: Reviewed `test_fog_config_e2e.py` and backend implementation. Calculations compute actual spherical distance (Haversine math) and PostGIS/fallback area formulas. No hardcoded return values or fake test assertions were detected.
-   - **Edge case check**: Verified boundary condition at 49.5m (duplicate, 0 pts) vs 60.0m / >50m (new discovery, +10 pts). Verified area formula math $\pi \times 150^2 = 70685.8347... \approx 70685.8$.
-   - **Build & Test verification**: Both backend test execution (`pytest`) and frontend production build (`npm run build`) passed with exit code 0.
-
----
+1. **Token Alignment**: Verified that every M3 color token in `:root` and `[data-theme="light"]` exactly matches the specifications in `PROJECT.md` and `ORIGINAL_REQUEST.md`.
+2. **Typography Integration**: Confirmed Google Fonts `@import` imports `Fira Sans` (for headers) and `Inter` (for tech metadata/badges) along with `Vazirmatn` for Persian fallbacks. Standard CSS selectors bind these rules to headings and badge/metadata utility classes.
+3. **Glassmorphism Verification**: Verified `.glass-panel` applies a `blur(12px)` backdrop filter with webkit vendor prefix and `@supports` fallback.
+4. **Build Integrity**: Executed `npm run build` in `frontend/`, confirming zero build issues or style compilation errors.
 
 ## 3. Caveats
 
-- `fogConfig.js` uses `Object.freeze`. If future milestones require dynamic live-tuning UI (e.g. admin sliders), this static object can be wrapped in a reactive state store.
-- Backend SQM fallback formula (`len(centroids) * 70685.8`) assumes non-overlapping circles when PostGIS is disabled. When PostGIS is active, `ST_Union` calculates precise non-overlapping spatial coverage.
-
----
+- No caveats. Milestone 1 scope is strictly defined and fully covered by `frontend/src/index.css` and `frontend/index.html`.
 
 ## 4. Conclusion
 
-**Verdict**: **APPROVE**
+**Verdict**: `APPROVE`
 
-Worker 1's implementation for Milestone 1 (Config & Backend Alignment) is clean, correct, thoroughly tested, and fully satisfies all specification requirements (R1, R3, AC1, AC3) and interface contracts without any integrity violations or regression issues.
-
-### Findings Summary
-- **Correctness**: ALL PASSED. Config parameters match exact specifications, backend radius is synchronized to 150m, 50m duplicate logic is preserved.
-- **Completeness**: ALL PASSED. All 31 backend tests pass, frontend builds cleanly.
-- **Integrity**: NO VIOLATIONS DETECTED. Real mathematical formulas and database queries used throughout.
-
----
+Milestone 1 satisfies all requirements set forth in `ORIGINAL_REQUEST.md` and `PROJECT.md`. Material 3 tokens, font imports, typography custom properties and classes, glassmorphism blur (12px), and preconnect links are cleanly implemented and verified via a passing Vite production build.
 
 ## 5. Verification Method
 
-To independently re-verify this review:
+- Build command: `cd frontend && npm run build` (Exit code: 0)
+- Source file inspection: `frontend/src/index.css` (lines 1–116) and `frontend/index.html` (lines 1–16).
 
-1. **Inspect Config File**:
-   - `view_file` on `d:/Fog-Map-agy/frontend/src/config/fogConfig.js`. Confirm `Object.freeze` and parameters `discoveryRadiusMeters: 150`, `duplicateThresholdMeters: 50`, `fogColor: '#0f172a'`, `fogOpacity: 0.88`, `clearCenterOpacity: 0.0`, `edgeFeatherWidthPx: 40`, `blendingMode: 'destination-out'`, `enableNoise: true`, `noiseOpacity: 0.045`.
+---
 
-2. **Inspect Backend Sync**:
-   - `view_file` on `d:/Fog-Map-agy/backend/app/modules/fog_of_war/service.py` (line 36: `radius_meters=150.0`, line 32: `distance < 50.0`).
-   - `view_file` on `d:/Fog-Map-agy/backend/app/modules/fog_of_war/repository.py` (line 25: `radius_meters: float = 150.0`, line 66: `70685.8`).
-   - `view_file` on `d:/Fog-Map-agy/backend/app/modules/exploration/models.py` (line 18: `default=0.15`).
+## Review Summary
 
-3. **Run Commands**:
-   - Backend pytest: `cd d:/Fog-Map-agy/backend && pytest` -> Expect 31 passed.
-   - Frontend build: `cd d:/Fog-Map-agy/frontend && npm run build` -> Expect exit code 0.
+**Verdict**: APPROVE
+
+### Findings
+- No critical, major, or minor issues found.
+
+### Verified Claims
+- M3 color tokens match UrbanExplorer spec for Light & Dark mode → verified via file inspection (`frontend/src/index.css`) → PASS
+- Typography font imports and CSS rules (`Fira Sans` headings, `Inter` tech badges) → verified via file inspection (`frontend/src/index.css`) → PASS
+- Glassmorphism backdrop-filter blur is 12px → verified via file inspection (`frontend/src/index.css`) → PASS
+- Clean Vite build (`npm run build`) → verified via terminal execution (`npm run build`) → PASS
+
+### Coverage Gaps
+- None.
+
+### Unverified Items
+- None.

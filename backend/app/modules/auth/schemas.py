@@ -22,7 +22,6 @@ class UserAuthResponse(BaseModel):
     role: str = "USER"
     email: Optional[str] = None
     phone_number: Optional[str] = None
-    score: int = 0
     exploration_tracking_enabled: bool = True
     show_fog: bool = True
 
